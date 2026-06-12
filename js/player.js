@@ -24,6 +24,7 @@ class Player {
     this.bufferTimer = 0;   // 기억해 둔 점프 입력 잔여 시간
     this.landSquash = 0;    // 착지 스쿼시 연출
     this.dustTimer = 0;     // 트레일 입자 스폰 타이머
+    this.runPhase = 0;      // 달리기 다리 사이클 위상
   }
 
   // 화면 크기 변경(리사이즈/회전) 시 위치·크기 재계산 (진행 상태 보존)
@@ -62,6 +63,8 @@ class Player {
 
   update(dt) {
     this.runTime += dt;
+    // 달리기 다리 사이클: 게임 속도에 비례(보폭 = 캐릭터 크기 기준)
+    if (this.onGround) this.runPhase += dt * (this.game.speed / (this.h * 0.30));
 
     // 코요테 타임: 지면이면 충전, 공중이면 감소
     if (this.onGround) this.coyoteTimer = CONFIG.COYOTE_TIME;
@@ -141,38 +144,21 @@ class Player {
     const stageId = this.game.stage.id;
 
     if (stageId === 3) { this._drawBoat(ctx); return; }
+    if (stageId === 1) { this._drawRunner(ctx); return; }
 
-    const isBike = stageId === 2;
-    const img = this.game.assets[isBike ? 'player_bike' : 'player_run'];
-
-    let bounce = 0, squashX = 1, squashY = 1;
-    if (this.onGround) {
-      const t = this.runTime * 12;
-      if (isBike) {
-        bounce = Math.sin(t) * -3;                  // 자전거: 가벼운 상하 흔들림(스쿼시 없음)
-      } else {
-        bounce = Math.abs(Math.sin(t)) * -8;        // 달리기: 바운스 + 스쿼시
-        const s = Math.sin(t * 2) * 0.04;
-        squashX = 1 + s; squashY = 1 - s;
-        if (this.landSquash > 0) {
-          squashX += this.landSquash * 0.18;
-          squashY -= this.landSquash * 0.18;
-        }
-      }
-    }
-
-    if (isBike) this._drawSpeedLines(ctx);
-
+    // 2단계: 자전거(스프라이트)
+    const img = this.game.assets['player_bike'];
+    let bounce = 0;
+    if (this.onGround) bounce = Math.sin(this.runTime * 12) * -3; // 가벼운 상하 흔들림
+    this._drawSpeedLines(ctx);
     const cx = this.x + this.w / 2;
     const cy = this.y + this.h + bounce;
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.scale(squashX, squashY);
     if (img && img.complete) {
       const ratio = img.naturalWidth / img.naturalHeight;
-      let h = this.h * (isBike ? 1.32 : 1.0);       // 자전거 풀 라이딩 포즈는 키워서 표시
-      let w = h * ratio;
-      const maxW = this.w * (isBike ? 1.8 : 1.3);
+      let h = this.h * 1.32, w = h * ratio;
+      const maxW = this.w * 1.8;
       if (w > maxW) { w = maxW; h = w / ratio; }
       ctx.drawImage(img, -w / 2, -h, w, h);
     } else {
@@ -197,6 +183,112 @@ class Player {
       ctx.lineTo(this.x - 10 - off - len, y);
       ctx.stroke();
     }
+    ctx.restore();
+  }
+
+  // 1단계: 캔버스로 직접 그리는 "달리는 백호돌이" (실제 다리 애니메이션)
+  _drawRunner(ctx) {
+    const C = CONFIG.COLORS;
+    const Hc = this.h;
+    const o = Math.max(1.5, Hc * 0.020);
+    const cx = this.x + this.w / 2;
+    const footBase = this.y + this.h;                 // 점프 시 함께 상승
+    const phase = this.onGround ? this.runPhase : Math.PI * 0.5; // 공중=도약 포즈
+    const bob = this.onGround ? Math.abs(Math.sin(phase)) * Hc * 0.035 : 0;
+    const ty = footBase - Hc * 0.56 - bob;            // 몸통 중심 y
+    const torsoRx = Hc * 0.27, torsoRy = Hc * 0.255;
+    const hy = ty + Hc * 0.16;
+    const hipB = [cx - Hc * 0.04, hy], hipF = [cx + Hc * 0.07, hy];
+    const thigh = Hc * 0.20, shin = Hc * 0.21;
+    const legW = Hc * 0.085, armW = Hc * 0.068;
+    const WHITE = '#FFFFFF', BLACK = '#1A1A1A', GREY = '#B0B6BC', RED = '#E45656';
+
+    const limb = (pts, w) => {
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.strokeStyle = BLACK; ctx.lineWidth = w + 2 * o;
+      ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.stroke();
+      ctx.strokeStyle = WHITE; ctx.lineWidth = w;
+      ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.stroke();
+    };
+    const legPts = (hip, ph) => {
+      const A = 0.85 * Math.sin(ph);
+      const bend = 0.30 + 0.55 * Math.max(0, -Math.sin(ph));
+      const K = [hip[0] + thigh * Math.sin(A), hip[1] + thigh * Math.cos(A)];
+      const sA = A - bend;
+      const F = [K[0] + shin * Math.sin(sA), K[1] + shin * Math.cos(sA)];
+      return [hip, K, F];
+    };
+    const ell = (x, y, rx, ry, fill, stroke) => {
+      ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = BLACK; ctx.lineWidth = o; ctx.stroke(); }
+    };
+    const shoe = (F) => ell(F[0] + Hc * 0.03, F[1] + Hc * 0.005, Hc * 0.08, Hc * 0.042, GREY, true);
+    const stripeArc = (x, y, rx, ry) => {
+      ctx.strokeStyle = BLACK; ctx.lineWidth = o; ctx.beginPath();
+      ctx.ellipse(x, y, rx, ry, 0, Math.PI * 1.66, Math.PI * 0.22); ctx.stroke();
+    };
+
+    ctx.save();
+    // 앞으로 기울이기(달리는 자세)
+    ctx.translate(cx, hy); ctx.rotate(-7 * Math.PI / 180); ctx.translate(-cx, -hy);
+
+    // 꼬리 (뒤, 줄무늬 끝)
+    const tb = [cx - torsoRx * 0.70, ty + Hc * 0.12];
+    const tail = [tb, [cx - torsoRx - Hc * 0.13, ty + Hc * 0.08], [cx - torsoRx - Hc * 0.13, ty - Hc * 0.05]];
+    limb(tail, Hc * 0.055);
+    const tip = tail[2];
+    ctx.strokeStyle = BLACK; ctx.lineWidth = Hc * 0.022; ctx.lineCap = 'butt';
+    for (let i = 0; i < 3; i++) {
+      const yy = tip[1] + i * Hc * 0.05 - Hc * 0.02;
+      ctx.beginPath(); ctx.moveTo(tip[0] - Hc * 0.045, yy); ctx.lineTo(tip[0] + Hc * 0.045, yy); ctx.stroke();
+    }
+
+    // 뒤 팔 / 뒤 다리
+    const shB = [cx - Hc * 0.02, ty - Hc * 0.04], aA = 0.6 * Math.sin(phase + Math.PI);
+    const elB = [shB[0] + Hc * 0.10 * Math.sin(aA), shB[1] + Hc * 0.11 * Math.cos(aA)];
+    const haB = [elB[0] + Hc * 0.10 * Math.sin(aA - 0.5), elB[1] + Hc * 0.10 * Math.cos(aA - 0.5)];
+    limb([shB, elB, haB], armW);
+    const legBk = legPts(hipB, phase + Math.PI); limb(legBk, legW); shoe(legBk[2]);
+
+    // 몸통
+    ell(cx, ty, torsoRx, torsoRy, WHITE, true);
+    stripeArc(cx - torsoRx * 0.55, ty - Hc * 0.05, torsoRx * 0.35, Hc * 0.05);
+    stripeArc(cx - torsoRx * 0.55, ty + Hc * 0.06, torsoRx * 0.35, Hc * 0.05);
+
+    // 머리
+    const hx = cx + Hc * 0.07, hYc = ty - Hc * 0.33, hr = Hc * 0.225;
+    ell(hx - hr * 0.66, hYc - hr * 0.83, hr * 0.33, hr * 0.4, WHITE, true);
+    ell(hx + hr * 0.66, hYc - hr * 0.83, hr * 0.33, hr * 0.4, WHITE, true);
+    ell(hx, hYc, hr, hr, WHITE, true);
+    // 이마 ‡ 마크
+    const mx = hx - hr * 0.05, my = hYc - hr * 0.45;
+    ctx.strokeStyle = BLACK; ctx.lineCap = 'round'; ctx.lineWidth = o * 1.3;
+    const seg = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
+    seg(mx, my - hr * 0.26, mx, my + hr * 0.20);
+    seg(mx - hr * 0.22, my - hr * 0.10, mx + hr * 0.22, my - hr * 0.10);
+    seg(mx - hr * 0.27, my + hr * 0.10, mx + hr * 0.27, my + hr * 0.10);
+    // 눈
+    ell(hx + hr * 0.16, hYc + hr * 0.10, o * 0.85, o * 0.85, BLACK, false);
+    ell(hx + hr * 0.60, hYc + hr * 0.10, o * 0.85, o * 0.85, BLACK, false);
+    // 주둥이 + 코 + 혀
+    ell(hx + hr * 0.42, hYc + hr * 0.48, hr * 0.40, hr * 0.30, WHITE, true);
+    ell(hx + hr * 0.42, hYc + hr * 0.34, o * 0.9, o * 0.7, BLACK, false);
+    ell(hx + hr * 0.42, hYc + hr * 0.62, hr * 0.11, hr * 0.10, RED, false);
+    // 볼 줄무늬
+    stripeArc(hx - hr * 0.5, hYc + hr * 0.1, hr * 0.32, hr * 0.34);
+
+    // 앞 다리 / 앞 팔
+    const legFr = legPts(hipF, phase); limb(legFr, legW); shoe(legFr[2]);
+    const shF = [cx + Hc * 0.09, ty - Hc * 0.03], aA2 = 0.95 * Math.sin(phase);
+    const elF = [shF[0] + Hc * 0.14 * Math.sin(aA2), shF[1] + Hc * 0.14 * Math.cos(aA2)];
+    const haF = [elF[0] + Hc * 0.10 * Math.sin(aA2 + 0.6), elF[1] + Hc * 0.10 * Math.cos(aA2 + 0.6)];
+    limb([shF, elF, haF], armW);
+
     ctx.restore();
   }
 
