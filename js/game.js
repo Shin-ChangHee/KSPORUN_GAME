@@ -99,7 +99,9 @@ class Game {
         loaded++;
         if (loaded === keys.length) this._onReady();
       };
-      img.src = ASSET_FILES[k];
+      // 캐시 무력화: 배포 빌드 버전을 쿼리로 부착(있을 때만)
+      const ver = (window.BUILD && window.BUILD.indexOf('_') !== 0) ? ('?v=' + window.BUILD) : '';
+      img.src = ASSET_FILES[k] + ver;
       this.assets[k] = img;
     });
   }

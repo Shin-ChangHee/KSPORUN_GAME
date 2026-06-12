@@ -33,6 +33,13 @@ jobs:
         with:
           enablement: true
 
+      - name: Stamp build version (cache-busting)
+        run: |
+          BUILD="${GITHUB_SHA::8}-$(date +%s)"
+          echo "Stamping build: $BUILD"
+          sed -i "s/__BUILD__/${BUILD}/g" index.html
+          grep -o "v=${BUILD}" index.html | head -1 || true
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
