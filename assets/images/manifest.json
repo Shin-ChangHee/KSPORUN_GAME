@@ -41,12 +41,12 @@
     "flipped": false
   },
   {
-    "source": "정장_입은_백호돌이.png",
+    "source": "정장_손흔드는_백호돌이.png(사용자 제공)",
     "output": "title_suit.png",
-    "role": "타이틀 대표 캐릭터",
+    "role": "타이틀 대표 캐릭터(사용자 교체)",
     "size": [
-      387,
-      506
+      434,
+      560
     ],
     "flipped": false
   },
