@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>달려라 백호돌이</title>
+  <meta name="description" content="KSPO 경영가치를 체험하는 엔드리스 러너 미니게임 — 달려라 백호돌이" />
+  <link rel="icon" href="assets/images/icon_face.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="stage-wrap">
+    <canvas id="game"></canvas>
+
+    <!-- 음소거 토글 -->
+    <button id="btn-mute" class="mute-btn" aria-label="음소거 토글">🔊</button>
+
+    <!-- 타이틀 화면 -->
+    <div id="screen-title" class="overlay">
+      <div class="panel">
+        <img id="title-char" class="char" alt="백호돌이" />
+        <h1>달려라 <span class="orange">백호돌이</span></h1>
+        <p class="lead">핵심가치에 반하는 <b>장애물(극복 대상)</b>을 뛰어넘고<br/>3개 무대를 완주해 <b class="sky">비전</b>에 도달하세요!</p>
+        <p class="hint">장애물 <b>안일·무기력·비효율·은폐</b>는 극복 대상 · <b>존중·조화·정정당당</b> 코인은 수집!</p>
+        <p id="challenge-note" class="challenge"></p>
+        <p id="title-best" class="best"></p>
+        <button class="cta" onclick="GAME._startGame()">▶ 시작하기</button>
+        <p class="ctrl">PC: Space / ↑ 점프 &nbsp;·&nbsp; 모바일: 화면 탭</p>
+      </div>
+    </div>
+
+    <!-- 게임오버 화면 -->
+    <div id="screen-over" class="overlay" style="display:none">
+      <div class="panel">
+        <img id="over-char" class="char" alt="게임오버" />
+        <h2>게임 오버</h2>
+        <p class="score-big"><span id="over-score">0</span><span class="unit">점</span></p>
+        <p class="sub">도달: <span id="over-stage"></span> · 최고 <span id="over-best">0</span></p>
+        <p class="encourage">괜찮아요! 안일을 딛고 다시 달려볼까요? 🐯</p>
+        <div class="btn-row">
+          <button id="btn-restart" class="cta">다시 도전</button>
+          <button class="cta ghost js-share">점수 공유</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 클리어 화면 -->
+    <div id="screen-clear" class="overlay" style="display:none">
+      <div class="panel">
+        <img id="clear-char" class="char" alt="클리어" />
+        <h2 class="orange">🏆 완주 성공!</h2>
+        <p class="vision">"국민 모두가 평생 즐기는<br/><b class="sky">K-스포츠 허브</b>"</p>
+        <p class="score-big"><span id="clear-score">0</span><span class="unit">점</span></p>
+        <p class="sub">수집한 경영방침 코인: <span id="clear-coins">0</span>개</p>
+        <p class="values">미션 · 스포츠로 국민이 건강하고 행복한 삶을<br/>핵심가치 · 탁월 · 열정 · 실용 · 투명</p>
+        <div class="btn-row">
+          <button id="btn-replay" class="cta">다시 하기</button>
+          <button class="cta ghost js-share">결과 공유</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/stages.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/obstacles.js"></script>
+  <script src="js/share.js"></script>
+  <script src="js/leaderboard.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

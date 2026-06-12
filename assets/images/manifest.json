@@ -1,0 +1,112 @@
+[
+  {
+    "source": "백호돌이_골프.png",
+    "output": "player_run.png",
+    "role": "1단계 주인공(달리기)",
+    "size": [
+      404,
+      463
+    ],
+    "flipped": true
+  },
+  {
+    "source": "백호돌이_자전거_가방.png",
+    "output": "player_bike.png",
+    "role": "2단계 주인공(자전거)",
+    "size": [
+      460,
+      432
+    ],
+    "flipped": true
+  },
+  {
+    "source": "백호돌이_경륜_.png",
+    "output": "mascot_cycle_kspo.png",
+    "role": "2단계 전환카드/브랜딩",
+    "size": [
+      373,
+      451
+    ],
+    "flipped": false
+  },
+  {
+    "source": "백호돌이_자전거.png",
+    "output": "mascot_bike_front.png",
+    "role": "보조/대체",
+    "size": [
+      334,
+      414
+    ],
+    "flipped": false
+  },
+  {
+    "source": "정장_입은_백호돌이.png",
+    "output": "title_suit.png",
+    "role": "타이틀 대표 캐릭터",
+    "size": [
+      387,
+      506
+    ],
+    "flipped": false
+  },
+  {
+    "source": "트렌치코트_커피.png",
+    "output": "title_trench.png",
+    "role": "타이틀/로딩 플레이버",
+    "size": [
+      389,
+      488
+    ],
+    "flipped": false
+  },
+  {
+    "source": "콩순이포즈.png",
+    "output": "clear_sparkle.png",
+    "role": "클리어 축하",
+    "size": [
+      426,
+      454
+    ],
+    "flipped": false
+  },
+  {
+    "source": "훈이피스.png",
+    "output": "clear_cool.png",
+    "role": "클리어 축하(대체)",
+    "size": [
+      496,
+      383
+    ],
+    "flipped": false
+  },
+  {
+    "source": "갸루피스.png",
+    "output": "gameover_peace.png",
+    "role": "게임오버 리액션(텍스트 제거)",
+    "size": [
+      374,
+      462
+    ],
+    "flipped": false
+  },
+  {
+    "source": "백호돌이_레깅스.png",
+    "output": "value_meditation.png",
+    "role": "경영방침 상징/로딩",
+    "size": [
+      385,
+      457
+    ],
+    "flipped": false
+  },
+  {
+    "source": "백호돌이_얼굴_아이콘.png",
+    "output": "icon_face.png",
+    "role": "UI아이콘/점수/파비콘/코인베이스",
+    "size": [
+      250,
+      226
+    ],
+    "flipped": false
+  }
+]
