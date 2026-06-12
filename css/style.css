@@ -41,11 +41,11 @@ body {
   touch-action: none;
 }
 
-/* 음소거 버튼 */
+/* 음소거 버튼 (점수와 겹치지 않도록 우하단 배치, 노치/홈인디케이터 여백 반영) */
 .mute-btn {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  right: calc(14px + env(safe-area-inset-right, 0px));
   z-index: 30;
   width: 44px;
   height: 44px;
