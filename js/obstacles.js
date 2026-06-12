@@ -15,25 +15,41 @@ function rrPath(ctx, x, y, w, h, r) {
 }
 
 class Obstacle {
-  constructor(game) {
+  constructor(game, opts) {
     this.game = game;
+    opts = opts || {};
     const s = game.scale || 1;
-    this.w = (38 + Math.random() * 26) * s;
-    this.h = (46 + Math.random() * 40) * s;
-    this.x = game.width + 20 * s;
-    this.y = game.groundY - this.h;
+    this.kind = opts.kind || 'ground';
     this.keyword = CONFIG.OBSTACLE_KEYWORDS[
       Math.floor(Math.random() * CONFIG.OBSTACLE_KEYWORDS.length)
     ];
     this.dead = false;
+    this.t = Math.random() * Math.PI * 2;   // 날갯짓 위상
+    if (this.kind === 'bird') {
+      this.w = (50 + Math.random() * 16) * s;
+      this.h = (32 + Math.random() * 8) * s;
+      const floatGap = (20 + Math.random() * 26) * s;  // 지면에서 살짝 떠서 점프로 회피
+      this.x = game.width + 20 * s;
+      this.y = game.groundY - floatGap - this.h;
+    } else {
+      this.w = (38 + Math.random() * 26) * s;
+      this.h = (46 + Math.random() * 40) * s;
+      this.x = game.width + 20 * s;
+      this.y = game.groundY - this.h;
+    }
   }
 
   update(dt, speed) {
     this.x -= speed * dt;
+    this.t += dt * 12;
     if (this.x + this.w < -40) this.dead = true;
   }
 
   getHitbox() {
+    if (this.kind === 'bird') {
+      const px = this.w * 0.16, py = this.h * 0.18;
+      return { x: this.x + px, y: this.y + py, w: this.w - px * 2, h: this.h - py * 2 };
+    }
     const padX = this.w * 0.14;
     return { x: this.x + padX, y: this.y, w: this.w - padX * 2, h: this.h };
   }
@@ -42,10 +58,14 @@ class Obstacle {
     const stageId = this.game.stage.id;
     ctx.save();
     ctx.lineJoin = 'round';
-    this._shadow(ctx);
-    if (stageId === 3) this._drawBuoy(ctx);
-    else if (stageId === 2) this._drawCone(ctx);
-    else this._drawHurdle(ctx);
+    if (this.kind === 'bird') {
+      this._drawBird(ctx);
+    } else {
+      this._shadow(ctx);
+      if (stageId === 3) this._drawBuoy(ctx);
+      else if (stageId === 2) this._drawCone(ctx);
+      else this._drawHurdle(ctx);
+    }
     this._drawLabel(ctx);
     ctx.restore();
   }
@@ -137,6 +157,48 @@ class Obstacle {
     ctx.beginPath(); ctx.moveTo(cx, cyb - rb); ctx.lineTo(cx, this.y); ctx.stroke();
     ctx.beginPath(); ctx.arc(cx, this.y + w * 0.08, w * 0.1, 0, Math.PI * 2);
     ctx.fillStyle = C.ORANGE; ctx.fill(); ctx.lineWidth = o; ctx.stroke();
+  }
+
+  _wing(ctx, px, py, len, ang, fill, o) {
+    ctx.save();
+    ctx.translate(px, py); ctx.rotate(ang);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(len * 0.5, -len * 0.20, len, len * 0.02);
+    ctx.quadraticCurveTo(len * 0.5, len * 0.30, 0, 0);
+    ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.lineWidth = o; ctx.strokeStyle = CONFIG.COLORS.INK; ctx.stroke();
+    ctx.restore();
+  }
+
+  // 날아오는 새 (왼쪽=진행 방향을 향함, 날갯짓 애니메이션)
+  _drawBird(ctx) {
+    const C = CONFIG.COLORS, s = this.game.scale || 1, o = Math.max(1.5, 2.4 * s);
+    const x = this.x, y = this.y, w = this.w, h = this.h, cx = x + w / 2, cy = y + h * 0.5;
+    const flap = Math.sin(this.t) * 0.6;
+    ctx.lineCap = 'round';
+    // 뒤쪽 날개(살짝 어둡게)
+    this._wing(ctx, cx + w * 0.04, cy - h * 0.05, w * 0.5, -0.5 + flap * 0.8, '#DCE7F0', o);
+    // 몸통
+    ctx.beginPath(); ctx.ellipse(cx, cy, w * 0.34, h * 0.34, 0, 0, Math.PI * 2);
+    ctx.fillStyle = C.WHITE; ctx.fill(); ctx.lineWidth = o; ctx.strokeStyle = C.INK; ctx.stroke();
+    // 꼬리(오른쪽)
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.26, cy); ctx.lineTo(cx + w * 0.5, cy - h * 0.18); ctx.lineTo(cx + w * 0.5, cy + h * 0.14);
+    ctx.closePath(); ctx.fillStyle = C.WHITE; ctx.fill(); ctx.stroke();
+    // 머리(왼쪽 앞)
+    const hx = cx - w * 0.26, hy = cy - h * 0.06, hr = h * 0.32;
+    ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI * 2); ctx.fillStyle = C.WHITE; ctx.fill(); ctx.stroke();
+    // 부리(오렌지)
+    ctx.beginPath();
+    ctx.moveTo(hx - hr * 0.65, hy - hr * 0.05); ctx.lineTo(hx - hr * 1.5, hy - hr * 0.16); ctx.lineTo(hx - hr * 0.6, hy + hr * 0.3);
+    ctx.closePath(); ctx.fillStyle = C.ORANGE; ctx.fill(); ctx.lineWidth = o * 0.8; ctx.stroke();
+    // 눈
+    ctx.beginPath(); ctx.arc(hx - hr * 0.12, hy - hr * 0.18, Math.max(1.2, o * 0.7), 0, Math.PI * 2);
+    ctx.fillStyle = C.INK; ctx.fill();
+    // 앞쪽 날개(흰색, 펄럭)
+    this._wing(ctx, cx - w * 0.02, cy - h * 0.10, w * 0.55, -0.7 + flap, C.WHITE, o);
   }
 
   _drawLabel(ctx) {

@@ -291,7 +291,8 @@ class Game {
       this.spawnTimer = 0;
       const [mn, mx] = this.stage.obstacleGap;
       this.nextSpawn = mn + Math.random() * (mx - mn);
-      this.obstacles.push(new Obstacle(this));
+      const kind = Math.random() < CONFIG.BIRD_CHANCE ? 'bird' : 'ground';
+      this.obstacles.push(new Obstacle(this, { kind }));
       if (Math.random() < CONFIG.COIN_SPAWN_CHANCE) {
         this.coins.push(new Coin(this, this.width + (120 + Math.random() * 80) * this.scale));
       }
