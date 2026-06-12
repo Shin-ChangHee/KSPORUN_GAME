@@ -154,15 +154,16 @@ class Player {
     let bounce = 0, squashX = 1, squashY = 1;
     if (this.onGround) {
       const t = this.runTime * 12;
+      const sc = this.game.scale || 1;
       if (isBike) {
         bounce = Math.sin(t) * -3;                  // 자전거: 가벼운 상하 흔들림
       } else {
-        bounce = Math.abs(Math.sin(t)) * -8;        // 달리기: 바운스 + 스쿼시
-        const s = Math.sin(t * 2) * 0.04;
+        bounce = Math.abs(Math.sin(t)) * -2.5 * sc; // 달리기: 바운스 최소화(통통 튐 완화)
+        const s = Math.sin(t * 2) * 0.012;          // 스쿼시도 약하게
         squashX = 1 + s; squashY = 1 - s;
         if (this.landSquash > 0) {
-          squashX += this.landSquash * 0.18;
-          squashY -= this.landSquash * 0.18;
+          squashX += this.landSquash * 0.10;
+          squashY -= this.landSquash * 0.10;
         }
       }
     }
