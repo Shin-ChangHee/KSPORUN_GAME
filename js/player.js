@@ -144,21 +144,40 @@ class Player {
     const stageId = this.game.stage.id;
 
     if (stageId === 3) { this._drawBoat(ctx); return; }
-    if (stageId === 1) { this._drawRunner(ctx); return; }
 
-    // 2단계: 자전거(스프라이트)
-    const img = this.game.assets['player_bike'];
-    let bounce = 0;
-    if (this.onGround) bounce = Math.sin(this.runTime * 12) * -3; // 가벼운 상하 흔들림
-    this._drawSpeedLines(ctx);
+    const isBike = stageId === 2;
+    const img = this.game.assets[isBike ? 'player_bike' : 'player_run'];
+
+    // 1단계 스프라이트가 아직 안 떴으면 캔버스 러너로 폴백
+    if (!isBike && (!img || !img.complete)) { this._drawRunner(ctx); return; }
+
+    let bounce = 0, squashX = 1, squashY = 1;
+    if (this.onGround) {
+      const t = this.runTime * 12;
+      if (isBike) {
+        bounce = Math.sin(t) * -3;                  // 자전거: 가벼운 상하 흔들림
+      } else {
+        bounce = Math.abs(Math.sin(t)) * -8;        // 달리기: 바운스 + 스쿼시
+        const s = Math.sin(t * 2) * 0.04;
+        squashX = 1 + s; squashY = 1 - s;
+        if (this.landSquash > 0) {
+          squashX += this.landSquash * 0.18;
+          squashY -= this.landSquash * 0.18;
+        }
+      }
+    }
+
+    if (isBike) this._drawSpeedLines(ctx);
+
     const cx = this.x + this.w / 2;
     const cy = this.y + this.h + bounce;
     ctx.save();
     ctx.translate(cx, cy);
+    ctx.scale(squashX, squashY);
     if (img && img.complete) {
       const ratio = img.naturalWidth / img.naturalHeight;
-      let h = this.h * 1.32, w = h * ratio;
-      const maxW = this.w * 1.8;
+      let h = this.h * (isBike ? 1.32 : 1.16), w = h * ratio;
+      const maxW = this.w * (isBike ? 1.8 : 1.7);
       if (w > maxW) { w = maxW; h = w / ratio; }
       ctx.drawImage(img, -w / 2, -h, w, h);
     } else {

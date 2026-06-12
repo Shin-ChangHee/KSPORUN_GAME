@@ -1,14 +1,14 @@
 [
   {
-    "source": "백호돌이_골프.png",
+    "source": "달리는_백호돌이.png(사용자 제공)",
     "output": "player_run.png",
-    "role": "1단계 주인공(달리기) — 골프 잔여물 제거",
+    "role": "1단계 주인공(달리기, 사용자 교체)",
     "size": [
-      320,
-      463
+      500,
+      491
     ],
-    "flipped": true,
-    "note": "largest-component cleanup + corner erase"
+    "flipped": false,
+    "note": "trapped-ball 누끼"
   },
   {
     "source": "백호돌이_자전거.png",
