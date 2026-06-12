@@ -2,20 +2,21 @@
   {
     "source": "백호돌이_골프.png",
     "output": "player_run.png",
-    "role": "1단계 주인공(달리기)",
+    "role": "1단계 주인공(달리기) — 골프 잔여물 제거",
     "size": [
-      404,
+      320,
       463
     ],
-    "flipped": true
+    "flipped": true,
+    "note": "largest-component cleanup + corner erase"
   },
   {
-    "source": "백호돌이_자전거_가방.png",
+    "source": "백호돌이_자전거.png",
     "output": "player_bike.png",
-    "role": "2단계 주인공(자전거)",
+    "role": "2단계 주인공(자전거) — 측면 풀 라이딩 포즈",
     "size": [
-      460,
-      432
+      386,
+      500
     ],
     "flipped": true
   },
