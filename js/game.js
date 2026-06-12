@@ -31,6 +31,7 @@ class Game {
     this.width = CONFIG.BASE_WIDTH;
     this.height = CONFIG.BASE_HEIGHT;
     this.groundY = this.height * CONFIG.GROUND_RATIO;
+    this.scale = 1;            // 화면 크기에 맞춘 월드 스케일 (가로 기준)
     this.dpr = window.devicePixelRatio || 1;
 
     this.assets = {};
@@ -58,43 +59,33 @@ class Game {
 
     this._lastTime = 0;
     this._bound = this._loop.bind(this);
-    this.paused = false;
 
     this._setupCanvas();
-    this._setupOrientation();
     this._bindInput();
     this._loadAssets();
   }
 
   _setupCanvas() {
-    const resize = () => {
-      const wrap = this.canvas.parentElement;
-      const maxW = wrap.clientWidth;
-      const maxH = wrap.clientHeight;
-      const ratio = CONFIG.BASE_WIDTH / CONFIG.BASE_HEIGHT;
-      let w = maxW, h = maxW / ratio;
-      if (h > maxH) { h = maxH; w = maxH * ratio; }
-      this.canvas.style.width = w + 'px';
-      this.canvas.style.height = h + 'px';
-      this.canvas.width = CONFIG.BASE_WIDTH * this.dpr;
-      this.canvas.height = CONFIG.BASE_HEIGHT * this.dpr;
-      this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-    };
-    resize();
-    window.addEventListener('resize', resize);
-  }
-
-  // 모바일 세로 화면에서는 안내가 뜨고 게임이 가려지므로 그동안 일시정지
-  _setupOrientation() {
-    const mq = window.matchMedia('(orientation: portrait) and (max-width: 820px)');
     const apply = () => {
-      this.paused = mq.matches;
-      if (this.paused) this.audio.stopBgm();
-      else if (this.state === STATE.PLAY) this.audio.startBgm();
+      const wrap = this.canvas.parentElement;
+      // 화면(컨테이너)을 그대로 채우는 반응형 캔버스 — 가로/세로 모두 대응
+      const cw = Math.max(240, wrap.clientWidth);
+      const ch = Math.max(240, wrap.clientHeight);
+      this.width = cw;
+      this.height = ch;
+      // 월드 스케일은 '가로 너비' 기준 → 장애물 반응 시간이 화면비와 무관하게 일정
+      this.scale = this.width / CONFIG.BASE_WIDTH;
+      this.groundY = this.height * CONFIG.GROUND_RATIO;
+      this.canvas.style.width = cw + 'px';
+      this.canvas.style.height = ch + 'px';
+      this.canvas.width = Math.round(cw * this.dpr);
+      this.canvas.height = Math.round(ch * this.dpr);
+      this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+      if (this.player && this.player.relayout) this.player.relayout();
     };
-    if (mq.addEventListener) mq.addEventListener('change', apply);
-    else if (mq.addListener) mq.addListener(apply);
     apply();
+    window.addEventListener('resize', apply);
+    window.addEventListener('orientationchange', () => setTimeout(apply, 80));
   }
 
   _loadAssets() {
@@ -188,7 +179,7 @@ class Game {
   _showCard(index) {
     this.stageIndex = index;
     this.stage = CONFIG.STAGES[index];
-    this.speed = this.stage.speed;
+    this.speed = this.stage.speed * this.scale;
     this.state = STATE.STAGE_CARD;
     this.cardTimer = 0;
     // 무대 진입 시 첫 장애물까지 유예 부여(시작하자마자 충돌 방지)
@@ -241,10 +232,8 @@ class Game {
   _loop(now) {
     const dt = Math.min((now - this._lastTime) / 1000 || 0, 0.05);
     this._lastTime = now;
-    if (!this.paused) {
-      this.elapsed += dt;
-      this._update(dt);
-    }
+    this.elapsed += dt;
+    this._update(dt);
     this._draw();
     requestAnimationFrame(this._bound);
   }
@@ -260,9 +249,12 @@ class Game {
       return;
     }
 
-    // 점수 & 속도 (무대별 상한까지만 가속)
+    // 점수 & 속도 (무대별 상한까지만 가속) — 속도는 화면 너비에 비례 스케일
     this.score += CONFIG.SCORE_PER_SEC * dt;
-    this.speed = Math.min(this.speed + this.stage.speedGrowth * dt, this.stage.maxSpeed);
+    this.speed = Math.min(
+      this.speed + this.stage.speedGrowth * this.scale * dt,
+      this.stage.maxSpeed * this.scale
+    );
     this.stageRenderer.update(dt, this.speed);
     this.player.update(dt);
 
@@ -280,7 +272,7 @@ class Game {
       this.nextSpawn = mn + Math.random() * (mx - mn);
       this.obstacles.push(new Obstacle(this));
       if (Math.random() < CONFIG.COIN_SPAWN_CHANCE) {
-        this.coins.push(new Coin(this, this.width + 120 + Math.random() * 80));
+        this.coins.push(new Coin(this, this.width + (120 + Math.random() * 80) * this.scale));
       }
     }
 
@@ -314,18 +306,20 @@ class Game {
   }
 
   _burst(x, y, color) {
+    const v = 160 * this.scale;
     for (let i = 0; i < 12; i++) {
       const ang = (Math.PI * 2 * i) / 12;
       this.particles.push({
-        x, y, vx: Math.cos(ang) * 160, vy: Math.sin(ang) * 160,
+        x, y, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v,
         life: 0.5, color,
       });
     }
   }
 
   _updateParticles(dt) {
+    const grav = 400 * this.scale;
     for (const p of this.particles) {
-      p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 400 * dt; p.life -= dt;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.vy += grav * dt; p.life -= dt;
     }
     this.particles = this.particles.filter((p) => p.life > 0);
     if (this.shakeTimer > 0) this.shakeTimer = Math.max(0, this.shakeTimer - dt);
@@ -339,7 +333,7 @@ class Game {
     // 화면 흔들림(충돌 시) — 월드 전체에 적용
     let shook = false;
     if (this.shakeTimer > 0) {
-      const m = this.shakeTimer * 22;
+      const m = this.shakeTimer * 22 * this.scale;
       ctx.save();
       ctx.translate((Math.random() - 0.5) * m, (Math.random() - 0.5) * m);
       shook = true;
@@ -380,43 +374,50 @@ class Game {
     ctx.globalAlpha = 1;
   }
 
+  // UI(글자/여백)용 클램프 스케일 — 너무 작아지거나 커지지 않도록
+  _ui() { return Math.max(0.7, Math.min(1.3, this.scale)); }
+
   _drawHUD(ctx) {
     const face = this.assets['icon_face'];
+    const u = this._ui();
+    const pad = 16 * u;
     ctx.save();
     // 점수 (우상단)
     ctx.textAlign = 'right';
-    ctx.font = 'bold 26px "Noto Sans KR", sans-serif';
+    ctx.font = `bold ${Math.round(26 * u)}px "Noto Sans KR", sans-serif`;
     ctx.fillStyle = CONFIG.COLORS.BLUE;
-    ctx.fillText(String(Math.floor(this.score)).padStart(5, '0'), this.width - 20, 40);
-    ctx.font = '13px "Noto Sans KR", sans-serif';
+    ctx.fillText(String(Math.floor(this.score)).padStart(5, '0'), this.width - pad, pad + 24 * u);
+    ctx.font = `${Math.round(13 * u)}px "Noto Sans KR", sans-serif`;
     ctx.fillStyle = 'rgba(10,42,112,0.7)';
-    ctx.fillText('BEST ' + this.best, this.width - 20, 60);
+    ctx.fillText('BEST ' + this.best, this.width - pad, pad + 44 * u);
     // 무대 (좌상단)
     ctx.textAlign = 'left';
-    if (face && face.complete) ctx.drawImage(face, 16, 16, 34, 34 * face.naturalHeight / face.naturalWidth);
-    ctx.font = 'bold 16px "Noto Sans KR", sans-serif';
+    const ic = 34 * u;
+    if (face && face.complete) ctx.drawImage(face, pad, pad, ic, ic * face.naturalHeight / face.naturalWidth);
+    ctx.font = `bold ${Math.round(16 * u)}px "Noto Sans KR", sans-serif`;
     ctx.fillStyle = CONFIG.COLORS.BLUE;
-    ctx.fillText(`STAGE ${this.stage.id} · ${this.stage.name}`, 58, 38);
+    ctx.fillText(`STAGE ${this.stage.id} · ${this.stage.name}`, pad + ic + 8, pad + 22 * u);
     ctx.restore();
   }
 
   _drawStageCard(ctx) {
+    const u = this._ui();
     const a = Math.min(1, this.cardTimer / 0.2) * Math.min(1, (1.0 - this.cardTimer) / 0.2 + 0.8);
     ctx.save();
     ctx.globalAlpha = Math.min(0.92, a);
     ctx.fillStyle = CONFIG.COLORS.BLUE;
-    const cardH = 150;
+    const cardH = 150 * u;
     ctx.fillRect(0, this.height / 2 - cardH / 2, this.width, cardH);
     ctx.fillStyle = CONFIG.COLORS.ORANGE;
-    ctx.fillRect(0, this.height / 2 - cardH / 2, this.width, 6);
+    ctx.fillRect(0, this.height / 2 - cardH / 2, this.width, 6 * u);
     ctx.globalAlpha = Math.min(1, a + 0.1);
     ctx.textAlign = 'center';
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 40px "Noto Sans KR", sans-serif';
-    ctx.fillText(`STAGE ${this.stage.id} · ${this.stage.name}`, this.width / 2, this.height / 2 - 6);
-    ctx.font = '18px "Noto Sans KR", sans-serif';
+    ctx.font = `bold ${Math.round(40 * u)}px "Noto Sans KR", sans-serif`;
+    ctx.fillText(`STAGE ${this.stage.id} · ${this.stage.name}`, this.width / 2, this.height / 2 - 6 * u);
+    ctx.font = `${Math.round(18 * u)}px "Noto Sans KR", sans-serif`;
     ctx.fillStyle = CONFIG.COLORS.SKYBLUE;
-    ctx.fillText(`[${this.stage.subtitle}] ${this.stage.intro}`, this.width / 2, this.height / 2 + 30);
+    ctx.fillText(`[${this.stage.subtitle}] ${this.stage.intro}`, this.width / 2, this.height / 2 + 30 * u);
     ctx.restore();
   }
 

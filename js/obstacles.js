@@ -5,10 +5,10 @@
 class Obstacle {
   constructor(game) {
     this.game = game;
-    const r = Math.random();
-    this.w = 38 + Math.random() * 26;
-    this.h = 46 + Math.random() * 40;
-    this.x = game.width + 20;
+    const s = game.scale || 1;
+    this.w = (38 + Math.random() * 26) * s;
+    this.h = (46 + Math.random() * 40) * s;
+    this.x = game.width + 20 * s;
     this.y = game.groundY - this.h;
     this.keyword = CONFIG.OBSTACLE_KEYWORDS[
       Math.floor(Math.random() * CONFIG.OBSTACLE_KEYWORDS.length)
@@ -79,14 +79,17 @@ class Obstacle {
 
   _drawLabel(ctx) {
     const { x, y, w } = this;
-    ctx.font = 'bold 13px "Noto Sans KR", sans-serif';
+    const s = this.game.scale || 1;
+    const fs = Math.max(10, Math.round(13 * s));
+    ctx.font = `bold ${fs}px "Noto Sans KR", sans-serif`;
     ctx.textAlign = 'center';
     const tx = x + w / 2;
-    const ty = y - 8;
+    const ty = y - 8 * s;
     const tw = ctx.measureText(this.keyword).width + 10;
     ctx.fillStyle = 'rgba(26,26,26,0.78)';
     ctx.beginPath();
-    const rx = tx - tw / 2, ry = ty - 14, rh = 18;
+    const rh = fs + 5;
+    const rx = tx - tw / 2, ry = ty - rh + 4;
     ctx.roundRect ? ctx.roundRect(rx, ry, tw, rh, 5) : ctx.rect(rx, ry, tw, rh);
     ctx.fill();
     ctx.fillStyle = CONFIG.COLORS.WHITE;
@@ -101,10 +104,11 @@ class Obstacle {
 class Coin {
   constructor(game, x) {
     this.game = game;
-    this.r = 20;
+    const s = game.scale || 1;
+    this.r = 20 * s;
     this.x = x;
     // 공중에 떠 있어 점프로 획득
-    this.y = game.groundY - this.r - (70 + Math.random() * 90);
+    this.y = game.groundY - this.r - (70 + Math.random() * 90) * s;
     this.keyword = CONFIG.COIN_KEYWORDS[
       Math.floor(Math.random() * CONFIG.COIN_KEYWORDS.length)
     ];
@@ -124,12 +128,13 @@ class Coin {
 
   draw(ctx) {
     const face = this.game.assets['icon_face'];
-    const bob = Math.sin(this.t) * 4;
+    const s = this.game.scale || 1;
+    const bob = Math.sin(this.t) * 4 * s;
     const cy = this.y + bob;
     ctx.save();
     // CI 오렌지 링
     ctx.beginPath();
-    ctx.arc(this.x, cy, this.r + 4, 0, Math.PI * 2);
+    ctx.arc(this.x, cy, this.r + 4 * s, 0, Math.PI * 2);
     ctx.fillStyle = CONFIG.COLORS.ORANGE;
     ctx.fill();
     ctx.beginPath();
@@ -147,10 +152,11 @@ class Coin {
       ctx.restore();
     }
     // 키워드 라벨
-    ctx.font = 'bold 12px "Noto Sans KR", sans-serif';
+    const fs = Math.max(10, Math.round(12 * s));
+    ctx.font = `bold ${fs}px "Noto Sans KR", sans-serif`;
     ctx.textAlign = 'center';
     ctx.fillStyle = CONFIG.COLORS.BLUE;
-    ctx.fillText(this.keyword, this.x, cy + this.r + 16);
+    ctx.fillText(this.keyword, this.x, cy + this.r + 16 * s);
     ctx.restore();
   }
 }

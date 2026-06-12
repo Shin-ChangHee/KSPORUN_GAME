@@ -10,8 +10,9 @@ class Player {
 
   reset() {
     const g = this.game;
-    this.w = 96;
-    this.h = 110;
+    const s = g.scale || 1;
+    this.w = 96 * s;
+    this.h = 110 * s;
     this.x = g.width * 0.16;
     this.groundY = g.groundY;       // 발이 닿는 y
     this.y = this.groundY - this.h; // top-left y
@@ -23,6 +24,20 @@ class Player {
     this.bufferTimer = 0;   // 기억해 둔 점프 입력 잔여 시간
     this.landSquash = 0;    // 착지 스쿼시 연출
     this.dustTimer = 0;     // 트레일 입자 스폰 타이머
+  }
+
+  // 화면 크기 변경(리사이즈/회전) 시 위치·크기 재계산 (진행 상태 보존)
+  relayout() {
+    const g = this.game;
+    const s = g.scale || 1;
+    const wasOnGround = this.onGround;
+    this.w = 96 * s;
+    this.h = 110 * s;
+    this.x = g.width * 0.16;
+    this.groundY = g.groundY;
+    const floor = this.groundY - this.h;
+    if (wasOnGround) this.y = floor;
+    else this.y = Math.min(this.y, floor);
   }
 
   // 점프 버튼을 누른 순간 (가변 점프 시작 + 버퍼 기록)
@@ -38,7 +53,7 @@ class Player {
   }
 
   _doJump() {
-    this.vy = CONFIG.JUMP_VELOCITY;
+    this.vy = CONFIG.JUMP_VELOCITY * (this.game.scale || 1);
     this.onGround = false;
     this.coyoteTimer = 0;
     this.bufferTimer = 0;
@@ -58,9 +73,10 @@ class Player {
       if (this.coyoteTimer > 0) this._doJump();
     }
 
-    // 중력 적용
-    this.vy += CONFIG.GRAVITY * dt;
-    if (this.vy > CONFIG.MAX_FALL_SPEED) this.vy = CONFIG.MAX_FALL_SPEED;
+    // 중력 적용 (월드 스케일 반영 → 점프 체공시간은 일정, 점프 높이는 화면 비례)
+    const s = this.game.scale || 1;
+    this.vy += CONFIG.GRAVITY * s * dt;
+    if (this.vy > CONFIG.MAX_FALL_SPEED * s) this.vy = CONFIG.MAX_FALL_SPEED * s;
     this.y += this.vy * dt;
 
     // 지면 착지
@@ -85,6 +101,7 @@ class Player {
   _spawnTrail() {
     const g = this.game;
     if (!g.particles) return;
+    const s = g.scale || 1;
     const stageId = g.stage.id;
     const footX = this.x + this.w * 0.32;
     const groundY = this.groundY;
@@ -92,16 +109,16 @@ class Player {
       // 보트 물보라(선미=뒤쪽에서 흩뿌림)
       for (let i = 0; i < 2; i++) {
         g.particles.push({
-          x: this.x - this.w * 0.2, y: groundY - 6 - Math.random() * 8,
-          vx: -120 - Math.random() * 120, vy: -40 - Math.random() * 90,
+          x: this.x - this.w * 0.2, y: groundY - (6 + Math.random() * 8) * s,
+          vx: (-120 - Math.random() * 120) * s, vy: (-40 - Math.random() * 90) * s,
           life: 0.45, color: i ? '#FFFFFF' : '#1B99C4',
         });
       }
     } else if (this.onGround) {
       // 달리기/자전거 먼지
       g.particles.push({
-        x: footX, y: groundY - 4,
-        vx: -90 - Math.random() * 80, vy: -20 - Math.random() * 40,
+        x: footX, y: groundY - 4 * s,
+        vx: (-90 - Math.random() * 80) * s, vy: (-20 - Math.random() * 40) * s,
         life: 0.35, color: 'rgba(120,110,90,0.5)',
       });
     }
