@@ -56,6 +56,7 @@ class Game {
     this.coinsCollected = 0;
     this.shakeTimer = 0;
     this.isNewBest = false;
+    this.endless = false;   // 3단계 완주 후 무한 주행 모드
 
     this._lastTime = 0;
     this._bound = this._loop.bind(this);
@@ -143,6 +144,9 @@ class Game {
       } else if (id === 'btn-restart' || id === 'btn-replay') {
         this.audio.unlock();
         this._startGame();
+      } else if (id === 'btn-continue') {
+        this.audio.unlock();
+        this._continueEndless();
       } else if (e.target.classList && e.target.classList.contains('js-share')) {
         Share.shareResult(this);
       }
@@ -171,9 +175,26 @@ class Game {
     this.spawnTimer = 0;
     this.nextSpawn = 1.0;
     this.coinsCollected = 0;
+    this.endless = false;
     this.player.reset();
     this._showCard(0);
     this.audio.startBgm();
+  }
+
+  // 3단계 완주 후 '계속 달리기' — 보트로 게임오버까지 무한 주행
+  _continueEndless() {
+    this.endless = true;
+    this.stageIndex = CONFIG.STAGES.length - 1;     // 3단계 유지(보트)
+    this.stage = CONFIG.STAGES[this.stageIndex];
+    this.obstacles = [];
+    this.coins = [];
+    this.particles = [];
+    this.spawnTimer = 0;
+    this.nextSpawn = CONFIG.START_GRACE;            // 재개 직후 충돌 방지
+    this.player.reset();
+    this.state = STATE.PLAY;
+    this.audio.startBgm();
+    this._syncOverlay();
   }
 
   _showCard(index) {
@@ -258,8 +279,8 @@ class Game {
     this.stageRenderer.update(dt, this.speed);
     this.player.update(dt);
 
-    // 무대 전환 체크
-    if (this.score >= CONFIG.STAGE_THRESHOLDS[this.stageIndex]) {
+    // 무대 전환 체크 (무한 주행 모드에서는 비활성)
+    if (!this.endless && this.score >= CONFIG.STAGE_THRESHOLDS[this.stageIndex]) {
       this._advanceStage();
       return;
     }
