@@ -141,14 +141,16 @@ class Obstacle {
 
   _drawLabel(ctx) {
     const C = CONFIG.COLORS, s = this.game.scale || 1;
-    const fs = Math.max(10, Math.round(13 * s));
+    // 글자는 화면이 작아도 잘 보이도록 덜 줄임(클램프) + 기본 크기 확대
+    const ls = Math.max(0.95, Math.min(1.4, s));
+    const fs = Math.round(17 * ls);
     ctx.font = `bold ${fs}px "Noto Sans KR", sans-serif`;
     ctx.textAlign = 'center';
     const tx = this.x + this.w / 2, ty = this.y - 10 * s;
-    const tw = ctx.measureText(this.keyword).width + 14;
-    const rh = fs + 8, rx = tx - tw / 2, ry = ty - rh + 3;
-    rrPath(ctx, rx, ry, tw, rh, 6); ctx.fillStyle = 'rgba(26,26,26,0.82)'; ctx.fill();
-    ctx.lineWidth = Math.max(1.5, 2 * s); ctx.strokeStyle = C.ORANGE; ctx.stroke();
+    const tw = ctx.measureText(this.keyword).width + 16;
+    const rh = fs + 9, rx = tx - tw / 2, ry = ty - rh + 3;
+    rrPath(ctx, rx, ry, tw, rh, 7); ctx.fillStyle = 'rgba(26,26,26,0.85)'; ctx.fill();
+    ctx.lineWidth = Math.max(1.5, 2 * ls); ctx.strokeStyle = C.ORANGE; ctx.stroke();
     ctx.fillStyle = C.WHITE; ctx.textBaseline = 'middle';
     ctx.fillText(this.keyword, tx, ry + rh / 2 + 1);
     ctx.textBaseline = 'alphabetic';
@@ -229,12 +231,13 @@ class Coin {
     ctx.beginPath(); ctx.ellipse(this.x - r * 0.4, cy - r * 0.5, r * 0.16, r * 0.26, -0.5, 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = 1;
 
-    // 키워드 배너
-    const fs = Math.max(10, Math.round(12 * s));
+    // 키워드 배너 (작은 화면에서도 잘 보이도록 클램프 + 확대)
+    const ls = Math.max(0.95, Math.min(1.4, s));
+    const fs = Math.round(15 * ls);
     ctx.font = `bold ${fs}px "Noto Sans KR", sans-serif`;
     ctx.textAlign = 'center';
-    const tw = ctx.measureText(this.keyword).width + 14;
-    const bh = fs + 7, by = cy + r + 4 * s;
+    const tw = ctx.measureText(this.keyword).width + 16;
+    const bh = fs + 8, by = cy + r + 4 * s;
     rrPath(ctx, this.x - tw / 2, by, tw, bh, 6); ctx.fillStyle = C.BLUE; ctx.fill();
     ctx.fillStyle = C.WHITE; ctx.textBaseline = 'middle';
     ctx.fillText(this.keyword, this.x, by + bh / 2 + 1);
