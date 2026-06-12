@@ -28,9 +28,13 @@ class Obstacle {
     if (this.kind === 'bird') {
       this.w = (50 + Math.random() * 16) * s;
       this.h = (32 + Math.random() * 8) * s;
-      const floatGap = (20 + Math.random() * 26) * s;  // 지면에서 살짝 떠서 점프로 회피
+      // 크롬 공룡게임 익룡처럼 '머리 위 높이' 비행:
+      // 가만히 달리면 밑으로 통과, 점프하면 부딪혀 게임오버
+      const standH = 110 * s;                       // 플레이어 키 기준
+      const clearance = (26 + Math.random() * 18) * s;  // 서 있을 때 머리 위 여유
+      const bottom = game.groundY - standH - clearance;
       this.x = game.width + 20 * s;
-      this.y = game.groundY - floatGap - this.h;
+      this.y = bottom - this.h;
     } else {
       this.w = (38 + Math.random() * 26) * s;
       this.h = (46 + Math.random() * 40) * s;
