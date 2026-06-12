@@ -58,8 +58,10 @@ class Game {
 
     this._lastTime = 0;
     this._bound = this._loop.bind(this);
+    this.paused = false;
 
     this._setupCanvas();
+    this._setupOrientation();
     this._bindInput();
     this._loadAssets();
   }
@@ -80,6 +82,19 @@ class Game {
     };
     resize();
     window.addEventListener('resize', resize);
+  }
+
+  // 모바일 세로 화면에서는 안내가 뜨고 게임이 가려지므로 그동안 일시정지
+  _setupOrientation() {
+    const mq = window.matchMedia('(orientation: portrait) and (max-width: 820px)');
+    const apply = () => {
+      this.paused = mq.matches;
+      if (this.paused) this.audio.stopBgm();
+      else if (this.state === STATE.PLAY) this.audio.startBgm();
+    };
+    if (mq.addEventListener) mq.addEventListener('change', apply);
+    else if (mq.addListener) mq.addListener(apply);
+    apply();
   }
 
   _loadAssets() {
@@ -226,8 +241,10 @@ class Game {
   _loop(now) {
     const dt = Math.min((now - this._lastTime) / 1000 || 0, 0.05);
     this._lastTime = now;
-    this.elapsed += dt;
-    this._update(dt);
+    if (!this.paused) {
+      this.elapsed += dt;
+      this._update(dt);
+    }
     this._draw();
     requestAnimationFrame(this._bound);
   }
