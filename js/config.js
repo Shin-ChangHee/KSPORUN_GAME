@@ -23,6 +23,12 @@ const CONFIG = {
   JUMP_VELOCITY: -950,    // px/s (점프 초기 속도)
   MAX_FALL_SPEED: 2000,
 
+  // --- 점프 손맛(게임필) 튜닝 ---
+  JUMP_CUT: 0.42,         // 버튼을 일찍 떼면 상승 속도를 이 비율로 잘라 낮게 점프(가변 점프)
+  COYOTE_TIME: 0.09,      // 지면을 막 벗어난 직후에도 점프 허용(초)
+  JUMP_BUFFER: 0.12,      // 착지 직전에 누른 점프 입력을 기억하는 시간(초)
+  START_GRACE: 1.1,       // 플레이 시작 후 첫 장애물 등장까지 유예(초)
+
   // --- 점수 ---
   SCORE_PER_SEC: 100,     // 거리(시간) 기반 자동 점수 (초당)
   COIN_BONUS: 50,         // 코인 1개 획득 보너스
@@ -39,6 +45,7 @@ const CONFIG = {
       intro: '세계평화의문을 지나 힘차게 달려요',
       speed: 420,           // px/s 시작 스크롤 속도
       speedGrowth: 14,      // 초당 속도 증가
+      maxSpeed: 720,        // 이 무대 최고 속도 상한
       obstacleGap: [1.1, 1.9], // 장애물 생성 간격(초) [min, max]
       sky: '#BfE3F2',
       skyBottom: '#EAF7FC',
@@ -53,6 +60,7 @@ const CONFIG = {
       intro: '뱅크를 질주하는 스피드의 무대',
       speed: 560,
       speedGrowth: 18,
+      maxSpeed: 920,
       obstacleGap: [0.9, 1.6],
       sky: '#FFE2B8',
       skyBottom: '#FFF1DA',
@@ -67,6 +75,7 @@ const CONFIG = {
       intro: '물살을 가르는 클라이맥스!',
       speed: 700,
       speedGrowth: 22,
+      maxSpeed: 1120,
       obstacleGap: [0.8, 1.4],
       sky: '#A9D6E5',
       skyBottom: '#D6F0F7',

@@ -53,6 +53,8 @@ class Game {
     this.cardTimer = 0;
     this.elapsed = 0;
     this.coinsCollected = 0;
+    this.shakeTimer = 0;
+    this.isNewBest = false;
 
     this._lastTime = 0;
     this._bound = this._loop.bind(this);
@@ -101,17 +103,29 @@ class Game {
   }
 
   _bindInput() {
-    const action = (e) => {
+    // 누름: 플레이 중이면 점프 시작(가변 점프), 그 외 화면은 시작/재시작
+    const press = () => {
       this.audio.unlock();
-      if (e.type === 'keydown') {
-        if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); this._press(); }
-        return;
-      }
-      e.preventDefault();
-      this._press();
+      if (this.state === STATE.PLAY) this.player.onPressJump();
+      else this._press();
     };
-    window.addEventListener('keydown', action);
-    this.canvas.addEventListener('pointerdown', action);
+    // 뗌: 플레이 중 상승 점프를 잘라 가변 높이 구현
+    const release = () => {
+      if (this.state === STATE.PLAY) this.player.onReleaseJump();
+    };
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        if (e.repeat) return; // 키 반복 무시
+        press();
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') release();
+    });
+    this.canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); press(); });
+    this.canvas.addEventListener('pointerup', (e) => { e.preventDefault(); release(); });
 
     // UI 버튼
     document.addEventListener('click', (e) => {
@@ -132,7 +146,6 @@ class Game {
   _press() {
     switch (this.state) {
       case STATE.TITLE: this._startGame(); break;
-      case STATE.PLAY: this.player.jump(); break;
       case STATE.GAMEOVER:
       case STATE.CLEAR:
         // 화면 버튼으로 재시작 유도 (오발사 방지: 0.6초 후 탭 허용)
@@ -163,6 +176,9 @@ class Game {
     this.speed = this.stage.speed;
     this.state = STATE.STAGE_CARD;
     this.cardTimer = 0;
+    // 무대 진입 시 첫 장애물까지 유예 부여(시작하자마자 충돌 방지)
+    this.spawnTimer = 0;
+    this.nextSpawn = CONFIG.START_GRACE;
     this.audio.play('stage');
     this._syncOverlay();
   }
@@ -181,6 +197,7 @@ class Game {
   _gameOver() {
     this.state = STATE.GAMEOVER;
     this._endTime = this.elapsed;
+    this.shakeTimer = 0.4; // 충돌 화면 흔들림
     this.audio.play('hit');
     this.audio.stopBgm();
     this._saveBest();
@@ -198,7 +215,8 @@ class Game {
 
   _saveBest() {
     const s = Math.floor(this.score);
-    if (s > this.best) {
+    this.isNewBest = s > this.best && s > 0;
+    if (this.isNewBest) {
       this.best = s;
       localStorage.setItem(CONFIG.STORAGE_BEST, String(s));
     }
@@ -225,9 +243,9 @@ class Game {
       return;
     }
 
-    // 점수 & 속도
+    // 점수 & 속도 (무대별 상한까지만 가속)
     this.score += CONFIG.SCORE_PER_SEC * dt;
-    this.speed += this.stage.speedGrowth * dt;
+    this.speed = Math.min(this.speed + this.stage.speedGrowth * dt, this.stage.maxSpeed);
     this.stageRenderer.update(dt, this.speed);
     this.player.update(dt);
 
@@ -293,12 +311,22 @@ class Game {
       p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 400 * dt; p.life -= dt;
     }
     this.particles = this.particles.filter((p) => p.life > 0);
+    if (this.shakeTimer > 0) this.shakeTimer = Math.max(0, this.shakeTimer - dt);
   }
 
   // ----- draw -----
   _draw() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.width, this.height);
+
+    // 화면 흔들림(충돌 시) — 월드 전체에 적용
+    let shook = false;
+    if (this.shakeTimer > 0) {
+      const m = this.shakeTimer * 22;
+      ctx.save();
+      ctx.translate((Math.random() - 0.5) * m, (Math.random() - 0.5) * m);
+      shook = true;
+    }
 
     if (this.state === STATE.LOADING) {
       ctx.fillStyle = CONFIG.COLORS.BLUE;
@@ -322,7 +350,8 @@ class Game {
     }
 
     if (this.state === STATE.STAGE_CARD) this._drawStageCard(ctx);
-    if (this.state === STATE.PLAY) {} // overlay via DOM
+
+    if (shook) ctx.restore();
   }
 
   _drawParticles(ctx) {

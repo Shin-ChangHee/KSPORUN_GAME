@@ -35,16 +35,28 @@ const UI = {
       this._set('over-score', Math.floor(game.score));
       this._set('over-stage', `STAGE ${game.stage.id} · ${game.stage.name}`);
       this._set('over-best', game.best);
+      this._set('over-newbest', game.isNewBest ? '🎉 신기록 달성!' : '');
+      this._set('over-challenge', this._challengeMsg(game));
       this._setImg('over-char', 'gameover_peace');
     }
     if (s === STATE.CLEAR) {
       this._set('clear-score', Math.floor(game.score));
       this._set('clear-coins', game.coinsCollected);
+      this._set('clear-newbest', game.isNewBest ? '🎉 신기록 달성!' : '');
       this._setImg('clear-char', 'clear_sparkle');
     }
     if (s === STATE.TITLE) {
       this._set('title-best', `내 최고점: ${game.best}`);
     }
+  },
+
+  // 공유 링크로 들어온 도전 점수와 비교한 메시지
+  _challengeMsg(game) {
+    const ch = Share.getChallengeScore && Share.getChallengeScore();
+    if (!ch) return '';
+    const me = Math.floor(game.score);
+    if (me > ch) return `🏅 도전 점수 ${ch}점 돌파!`;
+    return `🎯 도전 점수까지 ${ch - me}점!`;
   },
 
   _toggle(el, show) {

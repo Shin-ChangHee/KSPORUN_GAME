@@ -18,18 +18,45 @@ class Player {
     this.vy = 0;
     this.onGround = true;
     this.runTime = 0;
+    this.jumpHeld = false;
+    this.coyoteTimer = 0;   // 지면을 벗어난 뒤 남은 점프 허용 시간
+    this.bufferTimer = 0;   // 기억해 둔 점프 입력 잔여 시간
+    this.landSquash = 0;    // 착지 스쿼시 연출
   }
 
-  jump() {
-    if (this.onGround) {
-      this.vy = CONFIG.JUMP_VELOCITY;
-      this.onGround = false;
-      this.game.audio.play('jump');
-    }
+  // 점프 버튼을 누른 순간 (가변 점프 시작 + 버퍼 기록)
+  onPressJump() {
+    this.jumpHeld = true;
+    this.bufferTimer = CONFIG.JUMP_BUFFER;
+  }
+
+  // 점프 버튼을 뗀 순간 (상승 중이면 속도를 잘라 낮은 점프)
+  onReleaseJump() {
+    this.jumpHeld = false;
+    if (this.vy < 0) this.vy *= CONFIG.JUMP_CUT;
+  }
+
+  _doJump() {
+    this.vy = CONFIG.JUMP_VELOCITY;
+    this.onGround = false;
+    this.coyoteTimer = 0;
+    this.bufferTimer = 0;
+    this.game.audio.play('jump');
   }
 
   update(dt) {
     this.runTime += dt;
+
+    // 코요테 타임: 지면이면 충전, 공중이면 감소
+    if (this.onGround) this.coyoteTimer = CONFIG.COYOTE_TIME;
+    else this.coyoteTimer = Math.max(0, this.coyoteTimer - dt);
+
+    // 버퍼된 점프 입력 처리(착지 직전/직후 입력도 반영)
+    if (this.bufferTimer > 0) {
+      this.bufferTimer -= dt;
+      if (this.coyoteTimer > 0) this._doJump();
+    }
+
     // 중력 적용
     this.vy += CONFIG.GRAVITY * dt;
     if (this.vy > CONFIG.MAX_FALL_SPEED) this.vy = CONFIG.MAX_FALL_SPEED;
@@ -38,10 +65,12 @@ class Player {
     // 지면 착지
     const floor = this.groundY - this.h;
     if (this.y >= floor) {
+      if (!this.onGround) this.landSquash = 1; // 착지 순간 스쿼시
       this.y = floor;
       this.vy = 0;
       this.onGround = true;
     }
+    if (this.landSquash > 0) this.landSquash = Math.max(0, this.landSquash - dt * 6);
   }
 
   // 충돌 판정용 내부 히트박스 (스프라이트보다 작게 → 억울한 죽음 방지)
@@ -70,6 +99,11 @@ class Player {
       const s = Math.sin(t * 2) * 0.04;
       squashX = 1 + s;
       squashY = 1 - s;
+    }
+    // 착지 스쿼시(납작) 연출
+    if (this.landSquash > 0) {
+      squashX += this.landSquash * 0.18;
+      squashY -= this.landSquash * 0.18;
     }
 
     const drawW = this.w;
