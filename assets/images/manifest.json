@@ -101,12 +101,12 @@
     "flipped": false
   },
   {
-    "source": "백호돌이_얼굴_아이콘.png",
+    "source": "윙크_백호돌이_얼굴(사용자 제공)",
     "output": "icon_face.png",
     "role": "UI아이콘/점수/파비콘/코인베이스",
     "size": [
-      250,
-      226
+      256,
+      234
     ],
     "flipped": false
   },
