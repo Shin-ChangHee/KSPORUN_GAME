@@ -53,6 +53,8 @@ class Game {
     this.particles = [];
     this.spawnTimer = 0;
     this.nextSpawn = 1.2;
+    this.coinTimer = 0;
+    this.nextCoin = 1.5;
     this.cardTimer = 0;
     this.elapsed = 0;
     this.coinsCollected = 0;
@@ -178,6 +180,8 @@ class Game {
     this.particles = [];
     this.spawnTimer = 0;
     this.nextSpawn = 1.0;
+    this.coinTimer = 0;
+    this.nextCoin = 1.8;
     this.coinsCollected = 0;
     this.endless = false;
     this.player.reset();
@@ -195,6 +199,8 @@ class Game {
     this.particles = [];
     this.spawnTimer = 0;
     this.nextSpawn = CONFIG.START_GRACE;            // 재개 직후 충돌 방지
+    this.coinTimer = 0;
+    this.nextCoin = CONFIG.START_GRACE;
     this.player.reset();
     this.state = STATE.PLAY;
     this.audio.startBgm();
@@ -210,6 +216,8 @@ class Game {
     // 무대 진입 시 첫 장애물까지 유예 부여(시작하자마자 충돌 방지)
     this.spawnTimer = 0;
     this.nextSpawn = CONFIG.START_GRACE;
+    this.coinTimer = 0;
+    this.nextCoin = CONFIG.START_GRACE + 0.6;
     this.audio.play('stage');
     this._syncOverlay();
   }
@@ -289,7 +297,7 @@ class Game {
       return;
     }
 
-    // 스폰
+    // 장애물 스폰
     this.spawnTimer += dt;
     if (this.spawnTimer >= this.nextSpawn) {
       this.spawnTimer = 0;
@@ -297,9 +305,15 @@ class Game {
       this.nextSpawn = mn + Math.random() * (mx - mn);
       const kind = Math.random() < CONFIG.BIRD_CHANCE ? 'bird' : 'ground';
       this.obstacles.push(new Obstacle(this, { kind }));
-      if (Math.random() < CONFIG.COIN_SPAWN_CHANCE) {
-        this.coins.push(new Coin(this, this.width + (120 + Math.random() * 80) * this.scale));
-      }
+    }
+
+    // 코인 스폰 (장애물과 독립 타이머 + 랜덤 위치, 장애물과 최소 간격 보장)
+    this.coinTimer += dt;
+    if (this.coinTimer >= this.nextCoin) {
+      this.coinTimer = 0;
+      const [cmn, cmx] = CONFIG.COIN_INTERVAL;
+      this.nextCoin = cmn + Math.random() * (cmx - cmn);
+      this._spawnCoin();
     }
 
     // 장애물 업데이트 & 충돌
@@ -329,6 +343,28 @@ class Game {
   _hit(a, b) {
     return a.x < b.x + b.w && a.x + a.w > b.x &&
            a.y < b.y + b.h && a.y + a.h > b.y;
+  }
+
+  // 코인을 화면 오른쪽 밖 랜덤 x에 생성하되, 장애물/코인과 최소 간격을 확보
+  _spawnCoin() {
+    const s = this.scale;
+    const minGap = CONFIG.COIN_MIN_GAP * s;
+    let x = this.width + (40 + Math.random() * 240) * s;
+    for (let tries = 0; tries < 10; tries++) {
+      let conflict = false;
+      for (const o of this.obstacles) {
+        if (Math.abs(x - (o.x + o.w / 2)) < minGap) {
+          x = o.x + o.w / 2 + minGap + Math.random() * 80 * s; conflict = true; break;
+        }
+      }
+      if (!conflict) {
+        for (const c of this.coins) {
+          if (Math.abs(x - c.x) < 80 * s) { x = c.x + 100 * s; conflict = true; break; }
+        }
+      }
+      if (!conflict) break;
+    }
+    this.coins.push(new Coin(this, x));
   }
 
   _burst(x, y, color) {

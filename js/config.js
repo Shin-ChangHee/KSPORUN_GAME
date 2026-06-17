@@ -91,7 +91,8 @@ const CONFIG = {
 
   // --- 경영방침 = 수집 코인 ---
   COIN_KEYWORDS: ['존중', '조화', '정정당당'],
-  COIN_SPAWN_CHANCE: 0.45, // 장애물 생성 시 코인도 같이 등장할 확률
+  COIN_INTERVAL: [1.1, 2.6], // 코인 생성 간격(초) [min, max] — 장애물과 독립
+  COIN_MIN_GAP: 120,         // 장애물과의 최소 수평 간격(px, 스케일 적용 전)
 
   // --- 경영가치 문구 ---
   VALUES: {
