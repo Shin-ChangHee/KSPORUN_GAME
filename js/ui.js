@@ -33,10 +33,9 @@ const UI = {
 
     if (s === STATE.GAMEOVER) {
       this._set('over-score', Math.floor(game.score));
-      this._set('over-stage', game.endless
-        ? `🏁 무한질주 종료! (${game.stage.name})`
-        : `STAGE ${game.stage.id} · ${game.stage.name}`);
-      this._set('over-best', game.best);
+      this._set('over-sub', game.endless
+        ? `무한질주 종료! · 최고 ${game.best}`
+        : `도달: STAGE ${game.stage.id} · ${game.stage.name} · 최고 ${game.best}`);
       this._set('over-newbest', game.isNewBest ? '🎉 신기록 달성!' : '');
       this._set('over-challenge', this._challengeMsg(game));
       this._setImg('over-char', 'gameover_peace');
