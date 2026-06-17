@@ -143,7 +143,11 @@ class Player {
   draw(ctx) {
     const stageId = this.game.stage.id;
 
-    if (stageId === 3) { this._drawBoat(ctx); return; }
+    if (stageId === 3) {
+      const bimg = this.game.assets['player_boat'];
+      if (bimg && bimg.complete) { this._drawBoatSprite(ctx, bimg); return; }
+      this._drawBoat(ctx); return;  // 스프라이트 미로딩 시 캔버스 보트 폴백
+    }
 
     const isBike = stageId === 2;
     const img = this.game.assets[isBike ? 'player_bike' : 'player_run'];
@@ -312,7 +316,23 @@ class Player {
     ctx.restore();
   }
 
-  // 3단계: 캔버스로 모터보트를 디테일하게 그리고 백호돌이 얼굴을 라이더로 합성
+  // 3단계: 사용자 제공 보트 스프라이트
+  _drawBoatSprite(ctx, img) {
+    const s = this.game.scale || 1;
+    const bob = this.onGround ? Math.sin(this.runTime * 6) * 2.5 * s : 0;
+    const cx = this.x + this.w / 2;
+    const cy = this.y + this.h + bob;
+    const ratio = img.naturalWidth / img.naturalHeight;
+    let h = this.h * 1.5, w = h * ratio;
+    const maxW = this.w * 2.4;
+    if (w > maxW) { w = maxW; h = w / ratio; }
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.drawImage(img, -w / 2, -h, w, h);
+    ctx.restore();
+  }
+
+  // 3단계(폴백): 캔버스로 모터보트를 그리고 백호돌이 얼굴을 라이더로 합성
   // (뱃머리=오른쪽=진행 방향, 선미/모터=왼쪽)
   _drawBoat(ctx) {
     const face = this.game.assets['icon_face'];

@@ -109,5 +109,15 @@
       226
     ],
     "flipped": false
+  },
+  {
+    "source": "보트_백호돌이(사용자 제공)",
+    "output": "player_boat.png",
+    "role": "3단계 주인공(보트, 사용자 교체)",
+    "size": [
+      560,
+      472
+    ],
+    "flipped": false
   }
 ]

@@ -14,6 +14,7 @@ const STATE = {
 const ASSET_FILES = {
   player_run: 'assets/images/player_run.png',
   player_bike: 'assets/images/player_bike.png',
+  player_boat: 'assets/images/player_boat.png',
   icon_face: 'assets/images/icon_face.png',
   title_suit: 'assets/images/title_suit.png',
   title_trench: 'assets/images/title_trench.png',
