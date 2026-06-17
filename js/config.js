@@ -70,7 +70,7 @@ const CONFIG = {
     },
     {
       id: 3,
-      name: '미사리 경정장(경정)',
+      name: '미사 경정장(경정)',
       subtitle: '모터보트',
       intro: '물살을 가르는 클라이맥스!',
       speed: 700,

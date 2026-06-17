@@ -119,5 +119,15 @@
       472
     ],
     "flipped": false
+  },
+  {
+    "source": "달려라_백호돌이_로고(사용자 제공)",
+    "output": "logo_title.png",
+    "role": "타이틀 로고 / 인게임 CI",
+    "size": [
+      640,
+      104
+    ],
+    "flipped": false
   }
 ]

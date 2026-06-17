@@ -16,6 +16,7 @@ const ASSET_FILES = {
   player_bike: 'assets/images/player_bike.png',
   player_boat: 'assets/images/player_boat.png',
   icon_face: 'assets/images/icon_face.png',
+  logo_title: 'assets/images/logo_title.png',
   title_suit: 'assets/images/title_suit.png',
   title_trench: 'assets/images/title_trench.png',
   mascot_cycle_kspo: 'assets/images/mascot_cycle_kspo.png',
@@ -404,17 +405,26 @@ class Game {
 
   _drawHUD(ctx) {
     const face = this.assets['icon_face'];
+    const logo = this.assets['logo_title'];
     const u = this._ui();
     const pad = 16 * u;
     ctx.save();
-    // 점수 (우상단)
+    // 우상단 CI 로고(점수 위에 고정)
+    let scoreTop = pad + 24 * u;
+    if (logo && logo.complete && logo.naturalWidth) {
+      const lw = Math.min(this.width * 0.42, 200 * u);
+      const lh = lw * logo.naturalHeight / logo.naturalWidth;
+      ctx.drawImage(logo, this.width - pad - lw, pad, lw, lh);
+      scoreTop = pad + lh + 22 * u;   // 점수를 로고 아래로
+    }
+    // 점수 (우상단, 로고 아래)
     ctx.textAlign = 'right';
     ctx.font = `bold ${Math.round(26 * u)}px "Noto Sans KR", sans-serif`;
     ctx.fillStyle = CONFIG.COLORS.BLUE;
-    ctx.fillText(String(Math.floor(this.score)).padStart(5, '0'), this.width - pad, pad + 24 * u);
+    ctx.fillText(String(Math.floor(this.score)).padStart(5, '0'), this.width - pad, scoreTop);
     ctx.font = `${Math.round(13 * u)}px "Noto Sans KR", sans-serif`;
     ctx.fillStyle = 'rgba(10,42,112,0.7)';
-    ctx.fillText('BEST ' + this.best, this.width - pad, pad + 44 * u);
+    ctx.fillText('BEST ' + this.best, this.width - pad, scoreTop + 20 * u);
     // 무대 (좌상단)
     ctx.textAlign = 'left';
     const ic = 34 * u;
