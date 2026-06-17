@@ -323,8 +323,8 @@ class Player {
     const cx = this.x + this.w / 2;
     const cy = this.y + this.h + bob;
     const ratio = img.naturalWidth / img.naturalHeight;
-    let h = this.h * 1.5, w = h * ratio;
-    const maxW = this.w * 2.4;
+    let h = this.h * 1.25, w = h * ratio;   // 살짝 축소(새와 안 닿게)
+    const maxW = this.w * 2.0;
     if (w > maxW) { w = maxW; h = w / ratio; }
     ctx.save();
     ctx.translate(cx, cy);
