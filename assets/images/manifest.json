@@ -1,11 +1,11 @@
 [
   {
-    "source": "달리는_백호돌이.png(사용자 제공)",
+    "source": "달리는_백호돌이_KSPO운동복.png(사용자 제공)",
     "output": "player_run.png",
     "role": "1단계 주인공(달리기, 사용자 교체)",
     "size": [
-      500,
-      491
+      499,
+      500
     ],
     "flipped": false,
     "note": "trapped-ball 누끼"
