@@ -143,6 +143,7 @@ class Game {
     // UI 버튼
     document.addEventListener('click', (e) => {
       const id = e.target.id;
+      const endlessBtn = e.target.closest ? e.target.closest('[data-endless]') : null;
       if (id === 'btn-mute') {
         this.audio.unlock();
         const muted = this.audio.toggleMute();
@@ -150,9 +151,9 @@ class Game {
       } else if (id === 'btn-restart' || id === 'btn-replay') {
         this.audio.unlock();
         this._startGame();
-      } else if (id === 'btn-continue') {
+      } else if (endlessBtn) {
         this.audio.unlock();
-        this._continueEndless();
+        this._continueEndless(parseInt(endlessBtn.getAttribute('data-endless'), 10));
       } else if (e.target.classList && e.target.classList.contains('js-share')) {
         Share.shareResult(this);
       }
@@ -189,11 +190,14 @@ class Game {
     this.audio.startBgm();
   }
 
-  // 3단계 완주 후 '계속 달리기' — 보트로 게임오버까지 무한 주행
-  _continueEndless() {
+  // 완주 후 무한질주(4단계) — 선택한 모드(0:달리기/1:자전거/2:보트)로 게임오버까지
+  // 난이도는 선택과 무관하게 CONFIG.ENDLESS로 동일하게 적용
+  _continueEndless(choice) {
     this.endless = true;
-    this.stageIndex = CONFIG.STAGES.length - 1;     // 3단계 유지(보트)
-    this.stage = CONFIG.STAGES[this.stageIndex];
+    const idx = Math.max(0, Math.min(CONFIG.STAGES.length - 1, choice || 0));
+    this.stageIndex = idx;                  // 비주얼(캐릭터/배경/장애물)은 선택한 무대
+    this.stage = CONFIG.STAGES[idx];
+    this.speed = CONFIG.ENDLESS.speed * this.scale;
     this.obstacles = [];
     this.coins = [];
     this.particles = [];
@@ -282,11 +286,12 @@ class Game {
       return;
     }
 
-    // 점수 & 속도 (무대별 상한까지만 가속) — 속도는 화면 너비에 비례 스케일
+    // 점수 & 속도 (무한질주는 공통 난이도 적용) — 속도는 화면 너비에 비례 스케일
     this.score += CONFIG.SCORE_PER_SEC * dt;
+    const diff = this.endless ? CONFIG.ENDLESS : this.stage;
     this.speed = Math.min(
-      this.speed + this.stage.speedGrowth * this.scale * dt,
-      this.stage.maxSpeed * this.scale
+      this.speed + diff.speedGrowth * this.scale * dt,
+      diff.maxSpeed * this.scale
     );
     this.stageRenderer.update(dt, this.speed);
     this.player.update(dt);
@@ -301,7 +306,7 @@ class Game {
     this.spawnTimer += dt;
     if (this.spawnTimer >= this.nextSpawn) {
       this.spawnTimer = 0;
-      const [mn, mx] = this.stage.obstacleGap;
+      const [mn, mx] = (this.endless ? CONFIG.ENDLESS : this.stage).obstacleGap;
       this.nextSpawn = mn + Math.random() * (mx - mn);
       const kind = Math.random() < CONFIG.BIRD_CHANCE ? 'bird' : 'ground';
       this.obstacles.push(new Obstacle(this, { kind }));
@@ -467,7 +472,8 @@ class Game {
     if (face && face.complete) ctx.drawImage(face, pad, pad, ic, ic * face.naturalHeight / face.naturalWidth);
     ctx.font = `bold ${Math.round(16 * u)}px "Noto Sans KR", sans-serif`;
     ctx.fillStyle = CONFIG.COLORS.BLUE;
-    ctx.fillText(`STAGE ${this.stage.id} · ${this.stage.name}`, pad + ic + 8, pad + 22 * u);
+    const label = this.endless ? `무한질주 · ${this.stage.name}` : `STAGE ${this.stage.id} · ${this.stage.name}`;
+    ctx.fillText(label, pad + ic + 8, pad + 22 * u);
     ctx.restore();
   }
 

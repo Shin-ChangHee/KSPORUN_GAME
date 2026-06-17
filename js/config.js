@@ -36,6 +36,14 @@ const CONFIG = {
   // --- 무대 전환 점수 기준 (config에서 조정) ---
   STAGE_THRESHOLDS: [500, 1200, 2000], // 1→2, 2→3, 3→클리어
 
+  // --- 무한질주(4단계) 공통 난이도 — 어떤 모드를 골라도 동일 ---
+  ENDLESS: {
+    speed: 600,
+    speedGrowth: 20,
+    maxSpeed: 1050,
+    obstacleGap: [0.9, 1.6],
+  },
+
   // --- 무대별 설정 ---
   STAGES: [
     {
