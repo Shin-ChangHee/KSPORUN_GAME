@@ -41,12 +41,12 @@
     "flipped": false
   },
   {
-    "source": "정장_손흔드는_백호돌이.png(사용자 제공)",
+    "source": "선글라스_댄스_백호돌이(사용자 제공)",
     "output": "title_suit.png",
     "role": "타이틀 대표 캐릭터(사용자 교체)",
     "size": [
-      434,
-      560
+      560,
+      488
     ],
     "flipped": false
   },
