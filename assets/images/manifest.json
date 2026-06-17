@@ -61,12 +61,12 @@
     "flipped": false
   },
   {
-    "source": "콩순이포즈.png",
+    "source": "완주성공_뾰잉_백호돌이(사용자 제공)",
     "output": "clear_sparkle.png",
-    "role": "클리어 축하",
+    "role": "클리어 축하(사용자 교체)",
     "size": [
-      426,
-      454
+      497,
+      520
     ],
     "flipped": false
   },
