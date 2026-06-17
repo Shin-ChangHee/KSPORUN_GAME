@@ -11,14 +11,14 @@
     "note": "trapped-ball 누끼"
   },
   {
-    "source": "백호돌이_자전거.png",
+    "source": "자전거_백호돌이_헬멧(사용자 제공)",
     "output": "player_bike.png",
-    "role": "2단계 주인공(자전거) — 측면 풀 라이딩 포즈",
+    "role": "2단계 주인공(자전거, 사용자 교체)",
     "size": [
-      386,
-      500
+      409,
+      520
     ],
-    "flipped": true
+    "flipped": false
   },
   {
     "source": "백호돌이_경륜_.png",
