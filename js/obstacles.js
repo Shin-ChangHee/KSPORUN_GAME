@@ -36,8 +36,15 @@ class Obstacle {
       this.x = game.width + 20 * s;
       this.y = bottom - this.h;
     } else {
-      this.w = (38 + Math.random() * 26) * s;
-      this.h = (46 + Math.random() * 40) * s;
+      // 바닥 장애물: 일부는 몬스터 스프라이트(점프로 넘을 수 있는 크기)
+      this.variant = (Math.random() < CONFIG.MONSTER_CHANCE) ? 'monster' : 'shape';
+      if (this.variant === 'monster') {
+        this.h = (58 + Math.random() * 16) * s;       // 점프로 넘기 좋은 높이
+        this.w = this.h * 0.9;                          // 몬스터 비율(가로:세로 ≈ 0.9)
+      } else {
+        this.w = (38 + Math.random() * 26) * s;
+        this.h = (46 + Math.random() * 40) * s;
+      }
       this.x = game.width + 20 * s;
       this.y = game.groundY - this.h;
     }
@@ -54,6 +61,11 @@ class Obstacle {
       const px = this.w * 0.16, py = this.h * 0.18;
       return { x: this.x + px, y: this.y + py, w: this.w - px * 2, h: this.h - py * 2 };
     }
+    if (this.variant === 'monster') {
+      // 몬스터: 양옆 손이 튀어나와 있어 좌우 여유를 더 줌(억울한 충돌 방지)
+      const px = this.w * 0.2, py = this.h * 0.08;
+      return { x: this.x + px, y: this.y + py, w: this.w - px * 2, h: this.h - py };
+    }
     const padX = this.w * 0.14;
     return { x: this.x + padX, y: this.y, w: this.w - padX * 2, h: this.h };
   }
@@ -64,6 +76,9 @@ class Obstacle {
     ctx.lineJoin = 'round';
     if (this.kind === 'bird') {
       this._drawBird(ctx);
+    } else if (this.variant === 'monster') {
+      this._shadow(ctx);
+      this._drawMonster(ctx);
     } else {
       this._shadow(ctx);
       if (stageId === 3) this._drawBuoy(ctx);
@@ -203,6 +218,21 @@ class Obstacle {
     ctx.fillStyle = C.INK; ctx.fill();
     // 앞쪽 날개(흰색, 펄럭)
     this._wing(ctx, cx - w * 0.02, cy - h * 0.10, w * 0.55, -0.7 + flap, C.WHITE, o);
+  }
+
+  // 바닥 몬스터 장애물 (스프라이트)
+  _drawMonster(ctx) {
+    const img = this.game.assets['obstacle_monster'];
+    const x = this.x, w = this.w, h = this.h, gy = this.y + this.h, cx = x + w / 2;
+    if (img && img.complete && img.naturalWidth) {
+      const ratio = img.naturalWidth / img.naturalHeight;
+      let dh = h, dw = dh * ratio;
+      ctx.drawImage(img, cx - dw / 2, gy - dh, dw, dh);
+    } else {
+      // 폴백: 보라 사각형
+      ctx.fillStyle = '#8E6FB0';
+      ctx.fillRect(x, this.y, w, h);
+    }
   }
 
   _drawLabel(ctx) {

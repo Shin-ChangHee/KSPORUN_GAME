@@ -129,5 +129,15 @@
       104
     ],
     "flipped": false
+  },
+  {
+    "source": "보라_몬스터(사용자 제공)",
+    "output": "obstacle_monster.png",
+    "role": "바닥 장애물(몬스터)",
+    "size": [
+      269,
+      300
+    ],
+    "flipped": false
   }
 ]

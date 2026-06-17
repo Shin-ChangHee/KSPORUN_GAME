@@ -15,6 +15,7 @@ const ASSET_FILES = {
   player_run: 'assets/images/player_run.png',
   player_bike: 'assets/images/player_bike.png',
   player_boat: 'assets/images/player_boat.png',
+  obstacle_monster: 'assets/images/obstacle_monster.png',
   icon_face: 'assets/images/icon_face.png',
   logo_title: 'assets/images/logo_title.png',
   title_suit: 'assets/images/title_suit.png',
