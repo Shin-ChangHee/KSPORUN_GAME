@@ -81,12 +81,12 @@
     "flipped": false
   },
   {
-    "source": "갸루피스.png",
+    "source": "게임오버_게임패드_백호돌이(사용자 제공)",
     "output": "gameover_peace.png",
-    "role": "게임오버 리액션(텍스트 제거)",
+    "role": "게임오버 리액션(사용자 교체)",
     "size": [
-      374,
-      462
+      451,
+      520
     ],
     "flipped": false
   },
