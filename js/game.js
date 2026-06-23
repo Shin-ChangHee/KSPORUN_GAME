@@ -25,7 +25,6 @@ const ASSET_FILES = {
   coin_char5: 'assets/images/coin_char5.png',
   icon_face: 'assets/images/icon_face.png',
   logo_title: 'assets/images/logo_title.png',
-  velodrome: 'assets/images/velodrome.png',
   title_suit: 'assets/images/title_suit.png',
   title_trench: 'assets/images/title_trench.png',
   mascot_cycle_kspo: 'assets/images/mascot_cycle_kspo.png',
