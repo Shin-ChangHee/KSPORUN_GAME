@@ -273,11 +273,16 @@ class Coin {
   constructor(game, x) {
     this.game = game;
     const s = game.scale || 1;
-    this.r = 20 * s;
+    // 코인 크기는 작은 화면(모바일)에서 너무 작아지지 않게 클램프
+    const cs = Math.max(0.82, Math.min(1.3, s));
+    this.r = 26 * cs;
     this.x = x;
-    // 공중에 떠 있어 점프로 획득
+    // 공중에 떠 있어 점프로 획득 (높이는 점프와 같은 raw 스케일 기준)
     this.y = game.groundY - this.r - (70 + Math.random() * 90) * s;
     this.imgIndex = nextCoinImg();   // 1~5 골고루
+    this.keyword = CONFIG.COIN_KEYWORDS[
+      Math.floor(Math.random() * CONFIG.COIN_KEYWORDS.length)
+    ];
     this.dead = false;
     this.t = Math.random() * Math.PI * 2;
   }
@@ -293,17 +298,27 @@ class Coin {
   }
 
   draw(ctx) {
-    const s = this.game.scale || 1;
+    const C = CONFIG.COLORS, s = this.game.scale || 1;
+    const ls = Math.max(0.9, Math.min(1.4, s));
     const bob = Math.sin(this.t) * 4 * s;
     const cy = this.y + bob;
     const img = this.game.assets['coin_char' + this.imgIndex];
-    const d = this.r * 2.7;   // 기존 코인과 비슷한 크기
+    const d = this.r * 2.5;
     if (img && img.complete && img.naturalWidth) {
       ctx.drawImage(img, this.x - d / 2, cy - d / 2, d, d);
     } else {
-      // 폴백: 오렌지 원
       ctx.beginPath(); ctx.arc(this.x, cy, this.r, 0, Math.PI * 2);
-      ctx.fillStyle = CONFIG.COLORS.ORANGE; ctx.fill();
+      ctx.fillStyle = C.ORANGE; ctx.fill();
     }
+    // 경영방침 키워드 배너 (존중·조화·정정당당)
+    const fs = Math.round(14 * ls);
+    ctx.font = `bold ${fs}px "Noto Sans KR", sans-serif`;
+    ctx.textAlign = 'center';
+    const tw = ctx.measureText(this.keyword).width + 16;
+    const bh = fs + 8, by = cy + this.r * 1.2 + 2 * s;
+    rrPath(ctx, this.x - tw / 2, by, tw, bh, 6); ctx.fillStyle = C.BLUE; ctx.fill();
+    ctx.fillStyle = C.WHITE; ctx.textBaseline = 'middle';
+    ctx.fillText(this.keyword, this.x, by + bh / 2 + 1);
+    ctx.textBaseline = 'alphabetic';
   }
 }
