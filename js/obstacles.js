@@ -253,9 +253,21 @@ class Obstacle {
   }
 }
 
+// 코인 캐릭터를 골고루(편중 없이) 뽑기 위한 셔플 백 — 5종이 모두 한 번씩 나온 뒤 재셔플
+let COIN_BAG = [];
+function nextCoinImg() {
+  if (COIN_BAG.length === 0) {
+    COIN_BAG = [1, 2, 3, 4, 5];
+    for (let i = COIN_BAG.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [COIN_BAG[i], COIN_BAG[j]] = [COIN_BAG[j], COIN_BAG[i]];
+    }
+  }
+  return COIN_BAG.pop();
+}
+
 /**
- * 경영방침 코인 (존중·조화·정정당당). 점프로 획득 시 보너스 점수 + 이펙트.
- * 코인 베이스는 얼굴 아이콘.
+ * 수집 코인 — 5종 캐릭터 이미지를 셔플 백으로 골고루 등장. 점프로 획득 시 보너스 점수.
  */
 class Coin {
   constructor(game, x) {
@@ -265,9 +277,7 @@ class Coin {
     this.x = x;
     // 공중에 떠 있어 점프로 획득
     this.y = game.groundY - this.r - (70 + Math.random() * 90) * s;
-    this.keyword = CONFIG.COIN_KEYWORDS[
-      Math.floor(Math.random() * CONFIG.COIN_KEYWORDS.length)
-    ];
+    this.imgIndex = nextCoinImg();   // 1~5 골고루
     this.dead = false;
     this.t = Math.random() * Math.PI * 2;
   }
@@ -283,61 +293,17 @@ class Coin {
   }
 
   draw(ctx) {
-    const face = this.game.assets['icon_face'];
-    const C = CONFIG.COLORS, s = this.game.scale || 1;
+    const s = this.game.scale || 1;
     const bob = Math.sin(this.t) * 4 * s;
-    const cy = this.y + bob, r = this.r;
-    const shine = 0.5 + 0.5 * Math.sin(this.t * 1.5); // 반짝임 펄스
-    ctx.save();
-
-    // 글로우
-    ctx.globalAlpha = 0.35 + shine * 0.25;
-    ctx.beginPath(); ctx.arc(this.x, cy, r * 1.35, 0, Math.PI * 2);
-    ctx.fillStyle = '#FFCB8A'; ctx.fill();
-    ctx.globalAlpha = 1;
-
-    // 바깥 링 + 톱니(노치)
-    ctx.beginPath(); ctx.arc(this.x, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = C.ORANGE; ctx.fill();
-    ctx.lineWidth = Math.max(2, 2.5 * s); ctx.strokeStyle = C.INK; ctx.stroke();
-    ctx.strokeStyle = '#D66000'; ctx.lineWidth = Math.max(1.5, 2 * s);
-    for (let i = 0; i < 12; i++) {
-      const a = i * Math.PI / 6;
-      ctx.beginPath();
-      ctx.moveTo(this.x + Math.cos(a) * r * 0.84, cy + Math.sin(a) * r * 0.84);
-      ctx.lineTo(this.x + Math.cos(a) * r * 0.98, cy + Math.sin(a) * r * 0.98);
-      ctx.stroke();
+    const cy = this.y + bob;
+    const img = this.game.assets['coin_char' + this.imgIndex];
+    const d = this.r * 2.7;   // 기존 코인과 비슷한 크기
+    if (img && img.complete && img.naturalWidth) {
+      ctx.drawImage(img, this.x - d / 2, cy - d / 2, d, d);
+    } else {
+      // 폴백: 오렌지 원
+      ctx.beginPath(); ctx.arc(this.x, cy, this.r, 0, Math.PI * 2);
+      ctx.fillStyle = CONFIG.COLORS.ORANGE; ctx.fill();
     }
-
-    // 안쪽 흰 디스크 + 얼굴
-    ctx.beginPath(); ctx.arc(this.x, cy, r * 0.72, 0, Math.PI * 2);
-    ctx.fillStyle = C.WHITE; ctx.fill();
-    ctx.lineWidth = Math.max(1.5, 2 * s); ctx.strokeStyle = '#D66000'; ctx.stroke();
-    if (face && face.complete) {
-      ctx.save();
-      ctx.beginPath(); ctx.arc(this.x, cy, r * 0.68, 0, Math.PI * 2); ctx.clip();
-      const ratio = face.naturalWidth / face.naturalHeight;
-      const fh = r * 1.5, fw = fh * ratio;
-      ctx.drawImage(face, this.x - fw / 2, cy - fh / 2, fw, fh);
-      ctx.restore();
-    }
-    // 반짝임 글린트
-    ctx.globalAlpha = 0.5 + shine * 0.5;
-    ctx.fillStyle = C.WHITE;
-    ctx.beginPath(); ctx.ellipse(this.x - r * 0.4, cy - r * 0.5, r * 0.16, r * 0.26, -0.5, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1;
-
-    // 키워드 배너 (작은 화면에서도 잘 보이도록 클램프 + 확대)
-    const ls = Math.max(0.95, Math.min(1.4, s));
-    const fs = Math.round(15 * ls);
-    ctx.font = `bold ${fs}px "Noto Sans KR", sans-serif`;
-    ctx.textAlign = 'center';
-    const tw = ctx.measureText(this.keyword).width + 16;
-    const bh = fs + 8, by = cy + r + 4 * s;
-    rrPath(ctx, this.x - tw / 2, by, tw, bh, 6); ctx.fillStyle = C.BLUE; ctx.fill();
-    ctx.fillStyle = C.WHITE; ctx.textBaseline = 'middle';
-    ctx.fillText(this.keyword, this.x, by + bh / 2 + 1);
-    ctx.textBaseline = 'alphabetic';
-    ctx.restore();
   }
 }

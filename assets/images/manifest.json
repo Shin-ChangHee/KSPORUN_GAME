@@ -139,5 +139,55 @@
       300
     ],
     "flipped": false
+  },
+  {
+    "source": "코인 캐릭터1(사용자 제공)",
+    "output": "coin_char1.png",
+    "role": "수집 코인 캐릭터(5종 랜덤)",
+    "size": [
+      240,
+      240
+    ],
+    "flipped": false
+  },
+  {
+    "source": "코인 캐릭터2(사용자 제공)",
+    "output": "coin_char2.png",
+    "role": "수집 코인 캐릭터(5종 랜덤)",
+    "size": [
+      240,
+      240
+    ],
+    "flipped": false
+  },
+  {
+    "source": "코인 캐릭터3(사용자 제공)",
+    "output": "coin_char3.png",
+    "role": "수집 코인 캐릭터(5종 랜덤)",
+    "size": [
+      240,
+      240
+    ],
+    "flipped": false
+  },
+  {
+    "source": "코인 캐릭터4(사용자 제공)",
+    "output": "coin_char4.png",
+    "role": "수집 코인 캐릭터(5종 랜덤)",
+    "size": [
+      240,
+      238
+    ],
+    "flipped": false
+  },
+  {
+    "source": "코인 캐릭터5(사용자 제공)",
+    "output": "coin_char5.png",
+    "role": "수집 코인 캐릭터(5종 랜덤)",
+    "size": [
+      240,
+      240
+    ],
+    "flipped": false
   }
 ]
