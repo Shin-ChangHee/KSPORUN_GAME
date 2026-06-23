@@ -144,26 +144,85 @@ class StageRenderer {
   }
 
   _drawWater(ctx, stage) {
-    const gy = this.game.groundY, W = this.game.width;
+    const g = this.game, gy = g.groundY, W = g.width, s = g.scale || 1;
+    // 구름 + 먼 강 건너 능선 (원경)
+    this._clouds(ctx, this.scrollFar * 0.5, s);
+    this._hills(ctx, gy - 6 * s, 16 * s, 'rgba(150,180,200,0.4)', this.scrollFar * 1.2, 360 * s);
+    // 심판/관제탑 (원경) — 띄엄띄엄
+    const tperiod = W * 1.1 + 300 * s;
+    const toff = this.scrollFar % tperiod;
+    for (let x = -toff; x < W + tperiod; x += tperiod) {
+      this._controlTower(ctx, x + W * 0.6, gy, s);
+    }
     // 물결 (중경)
     ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2 * s;
     for (let row = 0; row < 4; row++) {
-      const yy = gy - 14 - row * 22;
-      const off = (this.scrollMid * (1 + row * 0.2)) % 80;
+      const yy = gy - 14 * s - row * 22 * s;
+      const off = (this.scrollMid * (1 + row * 0.2)) % (80 * s);
       ctx.beginPath();
-      for (let x = -off; x < W; x += 80) {
+      for (let x = -off; x < W; x += 80 * s) {
         ctx.moveTo(x, yy);
-        ctx.quadraticCurveTo(x + 20, yy - 6, x + 40, yy);
-        ctx.quadraticCurveTo(x + 60, yy + 6, x + 80, yy);
+        ctx.quadraticCurveTo(x + 20 * s, yy - 6 * s, x + 40 * s, yy);
+        ctx.quadraticCurveTo(x + 60 * s, yy + 6 * s, x + 80 * s, yy);
       }
       ctx.stroke();
     }
-    // 턴마크 부표 (원경)
-    const off2 = this.scrollFar % (W + 300);
-    ctx.fillStyle = 'rgba(255,127,0,0.6)';
+    // 결승선/턴마크 깃발 부표 (중경) — 빨강·오렌지 번갈아
+    const bperiod = W * 0.62 + 120 * s;
+    const boff = this.scrollMid % bperiod;
+    let n = 0;
+    for (let x = -boff; x < W + bperiod; x += bperiod) {
+      this._flagBuoy(ctx, x + W * 0.3, gy, s, (n++ % 2) ? '#E03B3B' : CONFIG.COLORS.ORANGE);
+    }
+  }
+
+  // 경정장 심판/관제탑
+  _controlTower(ctx, x, gy, s) {
+    const th = gy * 0.32, tw = 16 * s, dw = 46 * s, dh = 26 * s, dy = gy - th;
+    // 기둥
+    ctx.fillStyle = 'rgba(236,242,246,0.92)';
+    ctx.fillRect(x - tw / 2, dy, tw, th);
+    // 심판 데크
+    ctx.fillStyle = 'rgba(222,232,240,0.96)';
+    ctx.fillRect(x - dw / 2, dy - dh, dw, dh);
+    ctx.strokeStyle = 'rgba(80,110,130,0.45)'; ctx.lineWidth = Math.max(1, 1.3 * s);
+    ctx.strokeRect(x - dw / 2, dy - dh, dw, dh);
+    // 창문
+    ctx.fillStyle = 'rgba(120,170,200,0.7)';
+    ctx.fillRect(x - dw / 2 + 4 * s, dy - dh + 5 * s, dw - 8 * s, dh * 0.45);
+    // 지붕
+    ctx.fillStyle = 'rgba(27,153,196,0.85)';
     ctx.beginPath();
-    ctx.arc(W - off2, gy - 30, 10, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(x - dw / 2 - 4 * s, dy - dh); ctx.lineTo(x + dw / 2 + 4 * s, dy - dh); ctx.lineTo(x, dy - dh - 16 * s);
+    ctx.closePath(); ctx.fill();
+    // 안테나 + 깃발
+    ctx.strokeStyle = '#6E7E8A'; ctx.lineWidth = Math.max(1, 1.4 * s);
+    ctx.beginPath(); ctx.moveTo(x, dy - dh - 16 * s); ctx.lineTo(x, dy - dh - 34 * s); ctx.stroke();
+    ctx.fillStyle = CONFIG.COLORS.ORANGE;
+    ctx.beginPath();
+    ctx.moveTo(x, dy - dh - 34 * s); ctx.lineTo(x + 16 * s, dy - dh - 29 * s); ctx.lineTo(x, dy - dh - 24 * s);
+    ctx.closePath(); ctx.fill();
+  }
+
+  // 결승선/턴마크 깃발 부표
+  _flagBuoy(ctx, x, gy, s, color) {
+    const by = gy - 6 * s;          // 수면 위
+    // 깃대
+    ctx.strokeStyle = '#3A3A3A'; ctx.lineWidth = Math.max(1.5, 2 * s);
+    ctx.beginPath(); ctx.moveTo(x, by); ctx.lineTo(x, by - 30 * s); ctx.stroke();
+    // 깃발
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x, by - 30 * s); ctx.lineTo(x + 20 * s, by - 25 * s); ctx.lineTo(x, by - 20 * s);
+    ctx.closePath(); ctx.fill();
+    // 부표(물에 뜬 공) + 흰 띠
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(x, by, 9 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(x - 9 * s, by - 2 * s, 18 * s, 4 * s);
+    // 잔물결
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = Math.max(1, 1.3 * s);
+    ctx.beginPath(); ctx.ellipse(x, by + 7 * s, 16 * s, 4 * s, 0, 0, Math.PI * 2); ctx.stroke();
   }
 }
