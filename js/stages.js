@@ -148,11 +148,13 @@ class StageRenderer {
     // 구름 + 먼 강 건너 능선 (원경)
     this._clouds(ctx, this.scrollFar * 0.5, s);
     this._hills(ctx, gy - 6 * s, 16 * s, 'rgba(150,180,200,0.4)', this.scrollFar * 1.2, 360 * s);
-    // 심판/관제탑 (원경) — 띄엄띄엄
-    const tperiod = W * 1.1 + 300 * s;
+    // 경기장 조명탑(플러드라이트) (원경) — 여러 개, 높이 다양
+    const tperiod = W * 0.46 + 120 * s;
     const toff = this.scrollFar % tperiod;
+    const hf = [1.0, 0.82, 1.16, 0.9];
     for (let x = -toff; x < W + tperiod; x += tperiod) {
-      this._controlTower(ctx, x + W * 0.6, gy, s);
+      const slot = Math.round((x + this.scrollFar) / tperiod);
+      this._floodlight(ctx, x + W * 0.18, gy, s, gy * 0.42 * hf[((slot % 4) + 4) % 4]);
     }
     // 물결 (중경)
     ctx.strokeStyle = 'rgba(255,255,255,0.5)';
@@ -177,32 +179,38 @@ class StageRenderer {
     }
   }
 
-  // 경정장 심판/관제탑
-  _controlTower(ctx, x, gy, s) {
-    const th = gy * 0.32, tw = 16 * s, dw = 46 * s, dh = 26 * s, dy = gy - th;
-    // 기둥
-    ctx.fillStyle = 'rgba(236,242,246,0.92)';
-    ctx.fillRect(x - tw / 2, dy, tw, th);
-    // 심판 데크
-    ctx.fillStyle = 'rgba(222,232,240,0.96)';
-    ctx.fillRect(x - dw / 2, dy - dh, dw, dh);
-    ctx.strokeStyle = 'rgba(80,110,130,0.45)'; ctx.lineWidth = Math.max(1, 1.3 * s);
-    ctx.strokeRect(x - dw / 2, dy - dh, dw, dh);
-    // 창문
-    ctx.fillStyle = 'rgba(120,170,200,0.7)';
-    ctx.fillRect(x - dw / 2 + 4 * s, dy - dh + 5 * s, dw - 8 * s, dh * 0.45);
-    // 지붕
-    ctx.fillStyle = 'rgba(27,153,196,0.85)';
+  // 경정장 조명탑 (플러드라이트)
+  _floodlight(ctx, x, gy, s, h) {
+    const topY = gy - h;
+    // 격자 마스트(좁은 사다리꼴)
+    const bw = 7 * s, tw = 2.5 * s;
+    ctx.fillStyle = 'rgba(90,100,110,0.85)';
     ctx.beginPath();
-    ctx.moveTo(x - dw / 2 - 4 * s, dy - dh); ctx.lineTo(x + dw / 2 + 4 * s, dy - dh); ctx.lineTo(x, dy - dh - 16 * s);
+    ctx.moveTo(x - bw, gy); ctx.lineTo(x - tw, topY); ctx.lineTo(x + tw, topY); ctx.lineTo(x + bw, gy);
     ctx.closePath(); ctx.fill();
-    // 안테나 + 깃발
-    ctx.strokeStyle = '#6E7E8A'; ctx.lineWidth = Math.max(1, 1.4 * s);
-    ctx.beginPath(); ctx.moveTo(x, dy - dh - 16 * s); ctx.lineTo(x, dy - dh - 34 * s); ctx.stroke();
-    ctx.fillStyle = CONFIG.COLORS.ORANGE;
-    ctx.beginPath();
-    ctx.moveTo(x, dy - dh - 34 * s); ctx.lineTo(x + 16 * s, dy - dh - 29 * s); ctx.lineTo(x, dy - dh - 24 * s);
-    ctx.closePath(); ctx.fill();
+    // 가로 격자
+    ctx.strokeStyle = 'rgba(90,100,110,0.45)'; ctx.lineWidth = Math.max(0.8, 1 * s);
+    for (let yy = topY + 10 * s; yy < gy - 4 * s; yy += 16 * s) {
+      const t = (yy - topY) / h, hw = tw + (bw - tw) * t;
+      ctx.beginPath(); ctx.moveTo(x - hw, yy); ctx.lineTo(x + hw, yy); ctx.stroke();
+    }
+    // 조명 패널 (상단, 약간 넓게)
+    const pw = 36 * s, ph = 15 * s, py = topY - ph;
+    ctx.fillStyle = 'rgba(70,80,90,0.92)';
+    ctx.fillRect(x - pw / 2, py, pw, ph);
+    // 빛 번짐(글로우)
+    ctx.fillStyle = 'rgba(255,250,205,0.22)';
+    ctx.beginPath(); ctx.ellipse(x, py + ph * 0.5, pw * 0.85, ph * 1.6, 0, 0, Math.PI * 2); ctx.fill();
+    // 램프 점들
+    ctx.fillStyle = 'rgba(255,250,210,0.95)';
+    const cols = 4, rows = 2, gx = pw / (cols + 1), gyy = ph / (rows + 1);
+    for (let r = 1; r <= rows; r++) {
+      for (let c = 1; c <= cols; c++) {
+        ctx.beginPath();
+        ctx.arc(x - pw / 2 + c * gx, py + r * gyy, Math.max(1, 1.8 * s), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
   }
 
   // 결승선/턴마크 깃발 부표
