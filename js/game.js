@@ -428,8 +428,8 @@ class Game {
     this.stageRenderer.draw(ctx, this.stage);
 
     if (this.state === STATE.PLAY || this.state === STATE.STAGE_CARD || this.state === STATE.GAMEOVER) {
-      this.coins.forEach((c) => c.draw(ctx));
       this.obstacles.forEach((o) => o.draw(ctx));
+      this.coins.forEach((c) => c.draw(ctx));   // 컬러볼을 장애물 뒤에 그려 문구가 가려지지 않게
       this.player.draw(ctx);
       this._drawParticles(ctx);
       this._drawHUD(ctx);
