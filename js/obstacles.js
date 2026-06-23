@@ -36,9 +36,12 @@ class Obstacle {
     opts = opts || {};
     const s = game.scale || 1;
     this.kind = opts.kind || 'ground';
-    this.keyword = CONFIG.OBSTACLE_KEYWORDS[
-      Math.floor(Math.random() * CONFIG.OBSTACLE_KEYWORDS.length)
-    ];
+    // 부정 키워드(극복 대상)와, 넘었을 때 바뀔 핵심가치(인덱스 매핑)
+    const ki = Math.floor(Math.random() * CONFIG.OBSTACLE_KEYWORDS.length);
+    this.keyword = CONFIG.OBSTACLE_KEYWORDS[ki];          // 안일/무기력/비효율/은폐
+    this.value = CONFIG.VALUES.core[ki] || this.keyword;  // 탁월/열정/실용/투명
+    this.transformed = false;   // 장애물을 넘으면 true → 핵심가치로 표시
+    this.transformT = 0;        // 변환 애니메이션 타이머
     this.dead = false;
     this.t = Math.random() * Math.PI * 2;   // 날갯짓 위상
     if (this.kind === 'bird') {
@@ -73,7 +76,15 @@ class Obstacle {
   update(dt, speed) {
     this.x -= speed * dt;
     this.t += dt * 12;
+    if (this.transformed) this.transformT += dt;
     if (this.x + this.w < -40) this.dead = true;
+  }
+
+  // 플레이어가 장애물을 넘은 순간 호출 — 부정 키워드를 핵심가치로 전환
+  transform() {
+    if (this.transformed) return;
+    this.transformed = true;
+    this.transformT = 0;
   }
 
   getHitbox() {
@@ -257,13 +268,15 @@ class Obstacle {
 
   _drawLabel(ctx) {
     const C = CONFIG.COLORS, s = this.game.scale || 1;
+    const tf = this.transformed;
+    const text = tf ? this.value : this.keyword;   // 넘으면 핵심가치로 교체
     // 글자는 화면이 작아도 잘 보이도록 덜 줄임(클램프) + 기본 크기 확대
     const ls = Math.max(0.95, Math.min(1.4, s));
     const fs = Math.round(17 * ls * 0.95);   // 라벨 글자 5% 축소
     ctx.font = `bold ${fs}px "Noto Sans KR", sans-serif`;
     ctx.textAlign = 'center';
     const tx = this.x + this.w / 2;
-    const tw = ctx.measureText(this.keyword).width + 16;
+    const tw = ctx.measureText(text).width + 16;
     const rh = fs + 9, rx = tx - tw / 2;
     // 새(공중)는 위, 바닥 장애물은 아래(지면 쪽)에 배치
     let ry;
@@ -272,11 +285,44 @@ class Obstacle {
     } else {
       ry = this.y + this.h + 8 * s;        // 장애물 아래(지면 위)
     }
-    rrPath(ctx, rx, ry, tw, rh, 7); ctx.fillStyle = 'rgba(26,26,26,0.85)'; ctx.fill();
-    ctx.lineWidth = Math.max(1.5, 2 * ls); ctx.strokeStyle = C.ORANGE; ctx.stroke();
+    const cyL = ry + rh / 2;
+
+    // 넘은 직후 팝 애니메이션(잠깐 커졌다 원래대로) + 살짝 떠오름
+    let pop = 1, rise = 0;
+    if (tf) {
+      const a = Math.min(1, this.transformT / 0.34);
+      pop = 1 + 0.42 * Math.sin(a * Math.PI);
+      rise = -8 * s * a;
+    }
+
+    ctx.save();
+    ctx.translate(tx, cyL + rise);
+    ctx.scale(pop, pop);
+    if (tf) {
+      // 긍정(핵심가치): 파랑 그라데이션 배경 + 흰 테두리
+      const g = ctx.createLinearGradient(0, -rh / 2, 0, rh / 2);
+      g.addColorStop(0, C.SKYBLUE); g.addColorStop(1, C.BLUE);
+      rrPath(ctx, -tw / 2, -rh / 2, tw, rh, 7); ctx.fillStyle = g; ctx.fill();
+      ctx.lineWidth = Math.max(1.5, 2 * ls); ctx.strokeStyle = C.WHITE; ctx.stroke();
+    } else {
+      // 부정(극복 대상): 어두운 배경 + 주황 테두리(경고)
+      rrPath(ctx, -tw / 2, -rh / 2, tw, rh, 7); ctx.fillStyle = 'rgba(26,26,26,0.85)'; ctx.fill();
+      ctx.lineWidth = Math.max(1.5, 2 * ls); ctx.strokeStyle = C.ORANGE; ctx.stroke();
+    }
     ctx.fillStyle = C.WHITE; ctx.textBaseline = 'middle';
-    ctx.fillText(this.keyword, tx, ry + rh / 2 + 1);
+    ctx.fillText(text, 0, 1);
     ctx.textBaseline = 'alphabetic';
+    ctx.restore();
+
+    // 변환 직후 반짝임(트윙클)으로 강조
+    if (tf && this.transformT < 0.55) {
+      const k = 1 - this.transformT / 0.55;
+      for (const [dx, dy, ph] of [[-0.5, -0.7, 0], [0.5, -0.7, 1.6], [0, -1.0, 3.2]]) {
+        const tk = Math.max(0, Math.sin(this.transformT * 12 + ph)) * k;
+        if (tk <= 0.05) continue;
+        drawTwinkle(ctx, tx + dx * tw * 0.5, cyL + rise + dy * rh, (2 + 4 * tk) * s, `rgba(255,255,255,${tk})`);
+      }
+    }
   }
 }
 

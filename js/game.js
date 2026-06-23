@@ -345,9 +345,15 @@ class Game {
 
     // 장애물 업데이트 & 충돌
     const pb = this.player.getHitbox();
+    const pcx = this.player.x + this.player.w / 2;
     for (const o of this.obstacles) {
       o.update(dt, this.speed);
       if (this._hit(pb, o.getHitbox())) { this._gameOver(); return; }
+      // 장애물을 넘은 순간(중심을 통과) → 부정 키워드를 핵심가치로 전환
+      if (!o.transformed && (o.x + o.w / 2) < pcx) {
+        o.transform();
+        this._burst(o.x + o.w / 2, o.y + o.h * 0.4, CONFIG.COLORS.SKYBLUE);
+      }
     }
     this.obstacles = this.obstacles.filter((o) => !o.dead);
 
