@@ -18,7 +18,7 @@ class Obstacle {
   constructor(game, opts) {
     this.game = game;
     opts = opts || {};
-    const s = game.scale || 1;
+    const s = (game.scale || 1) * 0.95;   // 장애물 전체 크기 5% 축소
     this.kind = opts.kind || 'ground';
     this.keyword = CONFIG.OBSTACLE_KEYWORDS[
       Math.floor(Math.random() * CONFIG.OBSTACLE_KEYWORDS.length)
@@ -246,9 +246,16 @@ class Obstacle {
     const fs = Math.round(17 * ls);
     ctx.font = `bold ${fs}px "Noto Sans KR", sans-serif`;
     ctx.textAlign = 'center';
-    const tx = this.x + this.w / 2, ty = this.y - 10 * s;
+    const tx = this.x + this.w / 2;
     const tw = ctx.measureText(this.keyword).width + 16;
-    const rh = fs + 9, rx = tx - tw / 2, ry = ty - rh + 3;
+    const rh = fs + 9, rx = tx - tw / 2;
+    // 새(공중)는 위, 바닥 장애물은 아래(지면 쪽)에 배치
+    let ry;
+    if (this.kind === 'bird') {
+      ry = this.y - 10 * s - rh;           // 새 위
+    } else {
+      ry = this.y + this.h + 8 * s;        // 장애물 아래(지면 위)
+    }
     rrPath(ctx, rx, ry, tw, rh, 7); ctx.fillStyle = 'rgba(26,26,26,0.85)'; ctx.fill();
     ctx.lineWidth = Math.max(1.5, 2 * ls); ctx.strokeStyle = C.ORANGE; ctx.stroke();
     ctx.fillStyle = C.WHITE; ctx.textBaseline = 'middle';
