@@ -279,7 +279,7 @@ class Coin {
     const s = game.scale || 1;
     // 코인 크기는 작은 화면(모바일)에서 너무 작아지지 않게 클램프
     const cs = Math.max(0.82, Math.min(1.3, s));
-    this.r = 26 * cs;
+    this.r = 22 * cs;
     this.x = x;
     // 공중에 떠 있어 점프로 획득 (높이는 점프와 같은 raw 스케일 기준)
     this.y = game.groundY - this.r - (70 + Math.random() * 90) * s;
