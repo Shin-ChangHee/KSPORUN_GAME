@@ -36,12 +36,53 @@ class StageRenderer {
     ctx.fillRect(0, gy, W, H - gy);
     ctx.fillStyle = stage.groundDark;
     ctx.fillRect(0, gy, W, 6);
-    // 지면 질감 (근경 스크롤)
-    ctx.fillStyle = 'rgba(0,0,0,0.08)';
-    const step = 60;
-    const off = this.scrollNear % step;
-    for (let x = -off; x < W; x += step) {
-      ctx.fillRect(x, gy + 14, 26, 5);
+    if (stage.id === 3) {
+      // 물 표면: 점선(차선처럼 보임) 대신 잔잔한 물결무늬
+      this._waterSurface(ctx, stage);
+    } else {
+      // 지면 질감 (근경 스크롤)
+      ctx.fillStyle = 'rgba(0,0,0,0.08)';
+      const step = 60;
+      const off = this.scrollNear % step;
+      for (let x = -off; x < W; x += step) {
+        ctx.fillRect(x, gy + 14, 26, 5);
+      }
+    }
+  }
+
+  // 경정장 물 표면 물결무늬 (지면 영역에 디테일하게)
+  _waterSurface(ctx, stage) {
+    const g = this.game, gy = g.groundY, W = g.width, H = g.height, s = g.scale || 1;
+    // 잔물결 라인 — 여러 줄, 깊어질수록 어둡고 느리게
+    const rows = 5;
+    for (let row = 0; row < rows; row++) {
+      const yy = gy + 16 * s + row * 16 * s;
+      if (yy > H) break;
+      const t = row / rows;
+      // 가까운(위) 물결은 밝고 또렷, 먼(아래) 물결은 옅게
+      ctx.strokeStyle = `rgba(255,255,255,${0.30 - t * 0.18})`;
+      ctx.lineWidth = Math.max(1, (2.2 - t * 1.0) * s);
+      const period = (70 + row * 18) * s;
+      const amp = (3.5 - t * 1.5) * s;
+      const off = (this.scrollNear * (1.0 - row * 0.12)) % period;
+      ctx.beginPath();
+      for (let x = -off - period; x < W + period; x += period) {
+        ctx.moveTo(x, yy);
+        ctx.quadraticCurveTo(x + period * 0.25, yy - amp, x + period * 0.5, yy);
+        ctx.quadraticCurveTo(x + period * 0.75, yy + amp, x + period, yy);
+      }
+      ctx.stroke();
+    }
+    // 반짝이는 윤슬 (작은 점들) — 빛 반사
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    const sp = 90 * s;
+    const goff = (this.scrollNear * 0.8) % sp;
+    for (let i = 0, x = -goff; x < W; x += sp, i++) {
+      const yy = gy + (20 + ((i * 37) % 60)) * s;
+      if (yy > H - 4 * s) continue;
+      ctx.beginPath();
+      ctx.ellipse(x, yy, 5 * s, 1.4 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 
