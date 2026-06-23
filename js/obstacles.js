@@ -18,7 +18,7 @@ class Obstacle {
   constructor(game, opts) {
     this.game = game;
     opts = opts || {};
-    const s = (game.scale || 1) * 0.95;   // 장애물 전체 크기 5% 축소
+    const s = game.scale || 1;
     this.kind = opts.kind || 'ground';
     this.keyword = CONFIG.OBSTACLE_KEYWORDS[
       Math.floor(Math.random() * CONFIG.OBSTACLE_KEYWORDS.length)
@@ -243,7 +243,7 @@ class Obstacle {
     const C = CONFIG.COLORS, s = this.game.scale || 1;
     // 글자는 화면이 작아도 잘 보이도록 덜 줄임(클램프) + 기본 크기 확대
     const ls = Math.max(0.95, Math.min(1.4, s));
-    const fs = Math.round(17 * ls);
+    const fs = Math.round(17 * ls * 0.95);   // 라벨 글자 5% 축소
     ctx.font = `bold ${fs}px "Noto Sans KR", sans-serif`;
     ctx.textAlign = 'center';
     const tx = this.x + this.w / 2;
