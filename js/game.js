@@ -59,6 +59,7 @@ class Game {
     this.obstacles = [];
     this.coins = [];
     this.particles = [];
+    this.popups = [];
     this.spawnTimer = 0;
     this.nextSpawn = 1.2;
     this.coinTimer = 0;
@@ -187,6 +188,7 @@ class Game {
     this.obstacles = [];
     this.coins = [];
     this.particles = [];
+    this.popups = [];
     this.spawnTimer = 0;
     this.nextSpawn = 1.0;
     this.coinTimer = 0;
@@ -209,6 +211,7 @@ class Game {
     this.obstacles = [];
     this.coins = [];
     this.particles = [];
+    this.popups = [];
     this.spawnTimer = 0;
     this.nextSpawn = CONFIG.START_GRACE;            // 재개 직후 충돌 방지
     this.coinTimer = 0;
@@ -357,6 +360,8 @@ class Game {
         this.coinsCollected++;
         this.audio.play('coin');
         this._burst(c.x, c.y, CONFIG.COLORS.ORANGE);
+        this._burst(c.x, c.y, '#FFFFFF');
+        this.popups.push({ x: c.x, y: c.y, t: 0, life: 0.7 });   // +점수 팝업 + 링 팝
       }
     }
     this.coins = this.coins.filter((c) => !c.dead);
@@ -411,7 +416,34 @@ class Game {
       p.x += p.vx * dt; p.y += p.vy * dt; p.vy += grav * dt; p.life -= dt;
     }
     this.particles = this.particles.filter((p) => p.life > 0);
+    if (this.popups) {
+      for (const p of this.popups) p.t += dt;
+      this.popups = this.popups.filter((p) => p.t < p.life);
+    }
     if (this.shakeTimer > 0) this.shakeTimer = Math.max(0, this.shakeTimer - dt);
+  }
+
+  // 컬러볼 획득 이펙트: "+점수" 팝업 + 링 팝
+  _drawPopups(ctx) {
+    if (!this.popups || !this.popups.length) return;
+    const s = this.scale, u = this._ui();
+    ctx.save();
+    ctx.textAlign = 'center';
+    for (const p of this.popups) {
+      const k = p.t / p.life, a = 1 - k;
+      // 링 팝
+      ctx.strokeStyle = `rgba(255,200,90,${a * 0.85})`;
+      ctx.lineWidth = Math.max(2, 3 * s);
+      ctx.beginPath(); ctx.arc(p.x, p.y, (8 + 46 * k) * s, 0, Math.PI * 2); ctx.stroke();
+      // +점수 떠오르기
+      ctx.font = `bold ${Math.round(20 * u)}px "Noto Sans KR", sans-serif`;
+      ctx.lineWidth = Math.max(2, 3 * u); ctx.strokeStyle = `rgba(255,255,255,${a})`;
+      ctx.fillStyle = `rgba(255,127,0,${a})`;
+      const ty = p.y - (10 + 34 * k) * s;
+      ctx.strokeText('+' + CONFIG.COIN_BONUS, p.x, ty);
+      ctx.fillText('+' + CONFIG.COIN_BONUS, p.x, ty);
+    }
+    ctx.restore();
   }
 
   // ----- draw -----
@@ -446,6 +478,7 @@ class Game {
       this.coins.forEach((c) => c.draw(ctx));   // 컬러볼을 장애물 뒤에 그려 문구가 가려지지 않게
       this.player.draw(ctx);
       this._drawParticles(ctx);
+      this._drawPopups(ctx);
       this._drawHUD(ctx);
     }
 

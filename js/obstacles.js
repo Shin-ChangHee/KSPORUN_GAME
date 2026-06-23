@@ -3,6 +3,22 @@
  * 무대별 디테일 형태: 1=육상 허들, 2=라바콘, 3=부표.
  * 키워드 라벨(안일/무기력/비효율/은폐)을 경고 태그로 표기.
  */
+// 4각 반짝임(트윙클)
+function drawTwinkle(ctx, x, y, r, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.lineTo(x + r * 0.24, y - r * 0.24);
+  ctx.lineTo(x + r, y);
+  ctx.lineTo(x + r * 0.24, y + r * 0.24);
+  ctx.lineTo(x, y + r);
+  ctx.lineTo(x - r * 0.24, y + r * 0.24);
+  ctx.lineTo(x - r, y);
+  ctx.lineTo(x - r * 0.24, y - r * 0.24);
+  ctx.closePath();
+  ctx.fill();
+}
+
 function rrPath(ctx, x, y, w, h, r) {
   r = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
@@ -315,11 +331,27 @@ class Coin {
     const cy = this.y + bob;
     const img = this.game.assets['coin_char' + this.imgIndex];
     const d = this.r * 2.5;
+
+    // 발광 후광(맥동) — '먹는 아이템' 식별
+    const pulse = 0.5 + 0.5 * Math.sin(this.t * 1.8);
+    const gr = ctx.createRadialGradient(this.x, cy, d * 0.15, this.x, cy, d * 0.72);
+    gr.addColorStop(0, `rgba(255,224,150,${0.3 + pulse * 0.28})`);
+    gr.addColorStop(1, 'rgba(255,224,150,0)');
+    ctx.fillStyle = gr;
+    ctx.beginPath(); ctx.arc(this.x, cy, d * 0.72, 0, Math.PI * 2); ctx.fill();
+
     if (img && img.complete && img.naturalWidth) {
       ctx.drawImage(img, this.x - d / 2, cy - d / 2, d, d);
     } else {
       ctx.beginPath(); ctx.arc(this.x, cy, this.r, 0, Math.PI * 2);
       ctx.fillStyle = C.ORANGE; ctx.fill();
+    }
+
+    // 반짝임(트윙클) — 위치별 위상차로 깜빡
+    for (const [dx, dy, ph] of [[0.6, -0.55, 0], [-0.58, -0.28, 2.1], [0.46, 0.52, 4.2]]) {
+      const tk = Math.sin(this.t * 3 + ph);
+      if (tk <= 0.1) continue;
+      drawTwinkle(ctx, this.x + dx * d * 0.5, cy + dy * d * 0.5, (2.5 + 3.5 * tk) * s, `rgba(255,255,255,${tk})`);
     }
     // 경영방침 키워드 배너 (존중·조화·정정당당)
     const fs = Math.round(14 * ls);
