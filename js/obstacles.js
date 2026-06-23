@@ -39,8 +39,12 @@ class Obstacle {
       // 바닥 장애물: 일부는 몬스터 스프라이트(점프로 넘을 수 있는 크기)
       this.variant = (Math.random() < CONFIG.MONSTER_CHANCE) ? 'monster' : 'shape';
       if (this.variant === 'monster') {
+        // 몬스터 3종 중 랜덤 (key, 가로/세로 비율)
+        const MON = [['obstacle_monster', 0.9], ['obstacle_monster2', 0.98], ['obstacle_monster3', 0.95]];
+        const m = MON[Math.floor(Math.random() * MON.length)];
+        this.monsterKey = m[0];
         this.h = (58 + Math.random() * 16) * s;       // 점프로 넘기 좋은 높이
-        this.w = this.h * 0.9;                          // 몬스터 비율(가로:세로 ≈ 0.9)
+        this.w = this.h * m[1];
       } else {
         this.w = (38 + Math.random() * 26) * s;
         this.h = (46 + Math.random() * 40) * s;
@@ -222,7 +226,7 @@ class Obstacle {
 
   // 바닥 몬스터 장애물 (스프라이트)
   _drawMonster(ctx) {
-    const img = this.game.assets['obstacle_monster'];
+    const img = this.game.assets[this.monsterKey || 'obstacle_monster'];
     const x = this.x, w = this.w, h = this.h, gy = this.y + this.h, cx = x + w / 2;
     if (img && img.complete && img.naturalWidth) {
       const ratio = img.naturalWidth / img.naturalHeight;

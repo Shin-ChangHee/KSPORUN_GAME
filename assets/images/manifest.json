@@ -189,5 +189,23 @@
       240
     ],
     "flipped": false
+  },
+  {
+    "source": "보라 몬스터2(사용자 제공)",
+    "output": "obstacle_monster2.png",
+    "role": "바닥 장애물(몬스터)",
+    "size": [
+      295,
+      300
+    ]
+  },
+  {
+    "source": "보라 몬스터3(사용자 제공)",
+    "output": "obstacle_monster3.png",
+    "role": "바닥 장애물(몬스터)",
+    "size": [
+      284,
+      300
+    ]
   }
 ]

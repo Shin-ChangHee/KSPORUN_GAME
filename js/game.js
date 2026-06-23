@@ -16,6 +16,8 @@ const ASSET_FILES = {
   player_bike: 'assets/images/player_bike.png',
   player_boat: 'assets/images/player_boat.png',
   obstacle_monster: 'assets/images/obstacle_monster.png',
+  obstacle_monster2: 'assets/images/obstacle_monster2.png',
+  obstacle_monster3: 'assets/images/obstacle_monster3.png',
   coin_char1: 'assets/images/coin_char1.png',
   coin_char2: 'assets/images/coin_char2.png',
   coin_char3: 'assets/images/coin_char3.png',
