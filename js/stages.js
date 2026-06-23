@@ -128,19 +128,65 @@ class StageRenderer {
   }
 
   _drawVelodrome(ctx, stage) {
-    const gy = this.game.groundY, W = this.game.width;
-    // 관중석 실루엣 (원경)
-    this._hills(ctx, gy - 20, 40, 'rgba(120,90,60,0.35)', this.scrollFar, 260);
-    // 기울어진 뱅크 라인 (중경)
-    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-    ctx.lineWidth = 3;
-    const off = this.scrollMid % 120;
-    for (let x = -off; x < W; x += 120) {
+    const g = this.game, gy = g.groundY, W = g.width, s = g.scale || 1;
+    // 구름 (밝은 분위기)
+    this._clouds(ctx, this.scrollFar * 0.5, s);
+    // 스피돔 돔형 경기장 (원경) — 띄엄띄엄 반복
+    const period = W * 1.2 + 320 * s;
+    const off = this.scrollFar % period;
+    for (let x = -off; x < W + period; x += period) {
+      this._velodrome(ctx, x + W * 0.5, gy, s);
+    }
+    // 기울어진 뱅크 라인 (중경, 밝게)
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 3 * s;
+    const loff = this.scrollMid % (120 * s);
+    for (let x = -loff; x < W; x += 120 * s) {
       ctx.beginPath();
       ctx.moveTo(x, gy);
-      ctx.lineTo(x + 60, gy - 40);
+      ctx.lineTo(x + 60 * s, gy - 40 * s);
       ctx.stroke();
     }
+  }
+
+  // 스피돔(돔형 벨로드롬) 실루엣
+  _velodrome(ctx, cx, gy, s) {
+    const W = this.game.width;
+    const bw = W * 0.6, bodyH = (gy) * 0.3, domeH = (gy) * 0.16;
+    const topY = gy - bodyH;
+    // 관중석 본체(사다리꼴)
+    ctx.fillStyle = '#9FBBD0';
+    ctx.beginPath();
+    ctx.moveTo(cx - bw / 2, gy);
+    ctx.lineTo(cx + bw / 2, gy);
+    ctx.lineTo(cx + bw * 0.43, topY);
+    ctx.lineTo(cx - bw * 0.43, topY);
+    ctx.closePath(); ctx.fill();
+    // 돔 지붕
+    ctx.fillStyle = '#B9D2E4';
+    ctx.beginPath();
+    ctx.ellipse(cx, topY, bw * 0.46, domeH, 0, Math.PI, 0);
+    ctx.fill();
+    // 지붕 하이라이트
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.beginPath();
+    ctx.ellipse(cx - bw * 0.12, topY - domeH * 0.25, bw * 0.2, domeH * 0.45, 0, Math.PI, 0);
+    ctx.fill();
+    // 창문 띠
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    const winY = topY + bodyH * 0.28, ww = bw * 0.052;
+    for (let i = -3; i <= 3; i++) {
+      ctx.fillRect(cx + i * bw * 0.11 - ww / 2, winY, ww, bodyH * 0.22);
+    }
+    // 깃대 + 깃발
+    ctx.strokeStyle = '#6E7E8A'; ctx.lineWidth = Math.max(2, 2.5 * s);
+    ctx.beginPath(); ctx.moveTo(cx, topY - domeH); ctx.lineTo(cx, topY - domeH - 34 * s); ctx.stroke();
+    ctx.fillStyle = CONFIG.COLORS.ORANGE;
+    ctx.beginPath();
+    ctx.moveTo(cx, topY - domeH - 34 * s);
+    ctx.lineTo(cx + 26 * s, topY - domeH - 27 * s);
+    ctx.lineTo(cx, topY - domeH - 20 * s);
+    ctx.closePath(); ctx.fill();
   }
 
   _drawWater(ctx, stage) {
