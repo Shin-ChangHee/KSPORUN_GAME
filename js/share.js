@@ -41,33 +41,72 @@ const Share = {
     return c;
   },
 
+  // dataURL → Blob (동기 변환) : toBlob 비동기 콜백에서 사용자 제스처 활성화가
+  // 만료돼 navigator.share/클립보드가 차단되는 문제를 피하기 위함
+  _dataURLtoBlob(dataURL) {
+    const [head, body] = dataURL.split(',');
+    const mime = (head.match(/:(.*?);/) || [])[1] || 'image/png';
+    const bin = atob(body);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  },
+
+  _download(blob, name) {
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = href;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 4000);
+  },
+
   async shareResult(game) {
-    const canvas = this.buildResultImage(game);
     const url = new URL(location.href);
     url.searchParams.set('score', Math.floor(game.score));
     const text = `달려라 백호돌이에서 ${Math.floor(game.score)}점! 내 점수 깨봐 🐯`;
 
-    canvas.toBlob(async (blob) => {
-      const file = new File([blob], 'baekhodori_score.png', { type: 'image/png' });
-      // Web Share API (모바일)
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], text, url: url.toString() });
-          return;
-        } catch (e) { /* 취소 시 폴백 */ }
-      }
-      // 폴백: 이미지 다운로드 + 링크 클립보드 복사
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'baekhodori_score.png';
-      a.click();
+    let blob = null, file = null;
+    try {
+      const canvas = this.buildResultImage(game);
+      // 동기적으로 Blob 생성 → 사용자 제스처(클릭) 활성화 유지
+      blob = this._dataURLtoBlob(canvas.toDataURL('image/png'));
+      file = new File([blob], 'baekhodori_score.png', { type: 'image/png' });
+    } catch (e) { /* 이미지 생성 실패해도 링크 공유는 가능하게 진행 */ }
+
+    // ① Web Share API — 파일 공유(모바일 우선)
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
-        await navigator.clipboard.writeText(url.toString());
-        alert('결과 이미지를 저장했어요!\n공유 링크가 클립보드에 복사되었습니다.');
+        await navigator.share({ files: [file], text, url: url.toString() });
+        return;
       } catch (e) {
-        alert('결과 이미지를 저장했어요!');
+        if (e && e.name === 'AbortError') return; // 사용자가 공유 취소
       }
-    }, 'image/png');
+    }
+    // ② 파일 공유 미지원 환경 — 텍스트/링크만 공유
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: '달려라 백호돌이', text, url: url.toString() });
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;
+      }
+    }
+    // ③ 폴백(PC 등): 이미지 다운로드 + 링크 클립보드 복사
+    if (blob) this._download(blob, 'baekhodori_score.png');
+    let copied = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url.toString());
+        copied = true;
+      }
+    } catch (e) { /* 무시 */ }
+    const msg = blob ? '결과 이미지를 저장했어요!\n' : '';
+    alert(msg + (copied
+      ? '공유 링크가 클립보드에 복사되었습니다.'
+      : '공유 링크: ' + url.toString()));
   },
 
   // URL에 ?score= 가 있으면 "도전 대상 점수"로 반환
