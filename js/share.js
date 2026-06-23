@@ -42,67 +42,33 @@ const Share = {
     return c;
   },
 
-  // dataURL → Blob (동기 변환) : toBlob 비동기 콜백에서 사용자 제스처 활성화가
-  // 만료돼 navigator.share/클립보드가 차단되는 문제를 피하기 위함
-  _dataURLtoBlob(dataURL) {
-    const [head, body] = dataURL.split(',');
-    const mime = (head.match(/:(.*?);/) || [])[1] || 'image/png';
-    const bin = atob(body);
-    const arr = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-    return new Blob([arr], { type: mime });
-  },
-
-  _download(blob, name) {
-    const href = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = href;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(href), 4000);
-  },
-
   async shareResult(game) {
     const url = new URL(location.href);
     url.searchParams.set('score', Math.floor(game.score));
     const urlStr = url.toString();
     const text = `달려라 백호돌이에서 ${Math.floor(game.score)}점! 내 점수 깨봐 🐯`;
 
-    let blob = null, file = null, dataURL = null;
+    // 결과 이미지는 미리보기 용도로만 생성(저장 기능 없이) — 실패해도 링크 공유는 가능
+    let dataURL = null;
     try {
-      const canvas = this.buildResultImage(game);
-      // 동기적으로 dataURL/Blob 생성 → 사용자 제스처(클릭) 활성화 유지
-      dataURL = canvas.toDataURL('image/png');
-      blob = this._dataURLtoBlob(dataURL);
-      file = new File([blob], 'baekhodori_score.png', { type: 'image/png' });
-    } catch (e) { /* 이미지 생성 실패해도 링크 공유는 가능하게 진행 */ }
+      dataURL = this.buildResultImage(game).toDataURL('image/png');
+    } catch (e) { /* 무시 */ }
 
-    // ① Web Share API — 파일 공유(모바일 우선)
-    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], text, url: urlStr });
-        return;
-      } catch (e) {
-        if (e && e.name === 'AbortError') return; // 사용자가 공유 취소
-      }
-    }
-    // ② 파일 공유 미지원 환경 — 텍스트/링크만 공유
+    // ① Web Share API(모바일) — 링크/텍스트 공유
     if (navigator.share) {
       try {
         await navigator.share({ title: '달려라 백호돌이', text, url: urlStr });
         return;
       } catch (e) {
-        if (e && e.name === 'AbortError') return;
+        if (e && e.name === 'AbortError') return; // 사용자가 공유 취소
       }
     }
-    // ③ 폴백: 결과 이미지 + 링크를 띄운 오버레이(모바일에서도 실제 저장/복사 가능)
-    this._showFallbackModal(dataURL, blob, urlStr);
+    // ② 폴백(PC·인앱 브라우저): 점수 미리보기 + 공유 링크 복사
+    this._showFallbackModal(dataURL, urlStr);
   },
 
-  // Web Share 미지원(PC·인앱 브라우저) 폴백 — 이미지를 직접 보여줘 저장/복사를 보장
-  _showFallbackModal(dataURL, blob, urlStr) {
+  // Web Share 미지원(PC·인앱 브라우저) 폴백 — 점수 미리보기 + 링크 복사
+  _showFallbackModal(dataURL, urlStr) {
     // 기존 모달 제거
     const prev = document.getElementById('share-modal');
     if (prev) prev.remove();
@@ -135,11 +101,11 @@ const Share = {
       img.src = dataURL;
       img.setAttribute('style', 'width:100%;border-radius:10px;display:block;margin:0 auto 8px');
       card.appendChild(img);
-      const hint = document.createElement('div');
-      hint.textContent = '📱 이미지를 길게 눌러 저장하거나, 아래 버튼을 이용하세요';
-      hint.setAttribute('style', 'font-size:12.5px;color:#666;margin-bottom:12px;line-height:1.45');
-      card.appendChild(hint);
     }
+    const hint = document.createElement('div');
+    hint.textContent = '아래 링크를 복사해 친구에게 공유하고 점수를 겨뤄보세요!';
+    hint.setAttribute('style', 'font-size:12.5px;color:#666;margin:8px 0 12px;line-height:1.45');
+    card.appendChild(hint);
 
     const btnStyle = (bg, fg) => [
       'display:block', 'width:100%', 'box-sizing:border-box', 'border:none',
@@ -147,15 +113,6 @@ const Share = {
       'cursor:pointer', 'margin-bottom:8px', `background:${bg}`, `color:${fg}`,
       'font-family:inherit',
     ].join(';');
-
-    // 이미지 저장(다운로드) — PC에서 동작, 모바일은 길게 눌러 저장 안내
-    if (blob) {
-      const save = document.createElement('button');
-      save.textContent = '💾 이미지 저장';
-      save.setAttribute('style', btnStyle(C.ORANGE, '#fff'));
-      save.addEventListener('click', () => this._download(blob, 'baekhodori_score.png'));
-      card.appendChild(save);
-    }
 
     // 링크 복사
     const copy = document.createElement('button');
