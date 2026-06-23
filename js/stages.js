@@ -149,44 +149,51 @@ class StageRenderer {
     }
   }
 
-  // 스피돔(돔형 벨로드롬) 실루엣
+  // 스피돔(광명 스피돔) 실루엣 — 낮고 넓은 타원 + 나선형 은빛 돔 지붕 + 유리 외벽
   _velodrome(ctx, cx, gy, s) {
     const W = this.game.width;
-    const bw = W * 0.6, bodyH = (gy) * 0.3, domeH = (gy) * 0.16;
-    const topY = gy - bodyH;
-    // 관중석 본체(사다리꼴)
-    ctx.fillStyle = '#9FBBD0';
+    const bw = W * 0.66;          // 전체 폭(넓게)
+    const bodyH = gy * 0.2;       // 유리 외벽(낮게)
+    const drumTopY = gy - bodyH;
+    const roofH = gy * 0.24;      // 돔 높이
+
+    // 유리 외벽(드럼) — 위는 타원으로 둥글게
+    ctx.fillStyle = '#8FA39A';
     ctx.beginPath();
     ctx.moveTo(cx - bw / 2, gy);
+    ctx.lineTo(cx - bw / 2, drumTopY);
+    ctx.ellipse(cx, drumTopY, bw / 2, bodyH * 0.5, 0, Math.PI, 0);
     ctx.lineTo(cx + bw / 2, gy);
-    ctx.lineTo(cx + bw * 0.43, topY);
-    ctx.lineTo(cx - bw * 0.43, topY);
+    ctx.ellipse(cx, gy, bw / 2, bodyH * 0.42, 0, 0, Math.PI);
     ctx.closePath(); ctx.fill();
-    // 돔 지붕
-    ctx.fillStyle = '#B9D2E4';
-    ctx.beginPath();
-    ctx.ellipse(cx, topY, bw * 0.46, domeH, 0, Math.PI, 0);
-    ctx.fill();
-    // 지붕 하이라이트
-    ctx.fillStyle = 'rgba(255,255,255,0.45)';
-    ctx.beginPath();
-    ctx.ellipse(cx - bw * 0.12, topY - domeH * 0.25, bw * 0.2, domeH * 0.45, 0, Math.PI, 0);
-    ctx.fill();
-    // 창문 띠
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    const winY = topY + bodyH * 0.28, ww = bw * 0.052;
-    for (let i = -3; i <= 3; i++) {
-      ctx.fillRect(cx + i * bw * 0.11 - ww / 2, winY, ww, bodyH * 0.22);
+    // 유리 층 라인(가로) + 반사
+    ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = Math.max(1, 1.6 * s);
+    for (let i = 1; i <= 3; i++) {
+      const yy = drumTopY + (bodyH * i / 4);
+      ctx.beginPath(); ctx.ellipse(cx, yy, bw / 2 * 0.99, bodyH * 0.5 * (1 - i * 0.03), 0, 0, Math.PI); ctx.stroke();
     }
-    // 깃대 + 깃발
-    ctx.strokeStyle = '#6E7E8A'; ctx.lineWidth = Math.max(2, 2.5 * s);
-    ctx.beginPath(); ctx.moveTo(cx, topY - domeH); ctx.lineTo(cx, topY - domeH - 34 * s); ctx.stroke();
-    ctx.fillStyle = CONFIG.COLORS.ORANGE;
+    ctx.fillStyle = 'rgba(210,225,220,0.35)';
     ctx.beginPath();
-    ctx.moveTo(cx, topY - domeH - 34 * s);
-    ctx.lineTo(cx + 26 * s, topY - domeH - 27 * s);
-    ctx.lineTo(cx, topY - domeH - 20 * s);
+    ctx.moveTo(cx - bw * 0.34, drumTopY + bodyH * 0.1);
+    ctx.lineTo(cx - bw * 0.18, drumTopY + bodyH * 0.1);
+    ctx.lineTo(cx - bw * 0.30, gy);
+    ctx.lineTo(cx - bw * 0.46, gy);
     ctx.closePath(); ctx.fill();
+
+    // 나선형 은빛 돔 지붕 — 점점 작아지는 동심 타원 띠(은/밝은은 교대)
+    const shades = ['#B7C2C7', '#D6DEE2'];
+    let rx = bw * 0.54, ry = roofH, rcx = cx, rcy = drumTopY;
+    for (let i = 0; i < 7; i++) {
+      ctx.fillStyle = shades[i % 2];
+      ctx.beginPath();
+      ctx.ellipse(rcx, rcy, rx, ry, 0, Math.PI, 2 * Math.PI);
+      ctx.closePath(); ctx.fill();
+      rx *= 0.82; ry *= 0.84;
+      rcy -= ry * 0.2; rcx += rx * 0.04;   // 위로 + 살짝 오른쪽 → 나선 비대칭
+    }
+    // 지붕-외벽 경계 그림자
+    ctx.strokeStyle = 'rgba(80,95,100,0.4)'; ctx.lineWidth = Math.max(1, 1.5 * s);
+    ctx.beginPath(); ctx.ellipse(cx, drumTopY, bw * 0.54, roofH, 0, Math.PI, 2 * Math.PI); ctx.stroke();
   }
 
   _drawWater(ctx, stage) {
