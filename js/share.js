@@ -27,7 +27,7 @@ const Share = {
     ctx.font = 'bold 64px "Noto Sans KR", sans-serif';
     ctx.fillText(String(Math.floor(game.score)), 300, 210);
     ctx.font = '18px "Noto Sans KR", sans-serif';
-    ctx.fillText(`코인 ${game.coinsCollected}개 · 최고 ${game.best}`, 300, 250);
+    ctx.fillText(`컬러볼 ${game.coinsCollected}개 · 최고 ${game.best}`, 300, 250);
     // 캐릭터
     const key = cleared ? 'clear_sparkle' : 'gameover_peace';
     const img = game.assets[key];
