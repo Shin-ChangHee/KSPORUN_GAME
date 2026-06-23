@@ -317,7 +317,18 @@ class Game {
       const [mn, mx] = (this.endless ? CONFIG.ENDLESS : this.stage).obstacleGap;
       this.nextSpawn = mn + Math.random() * (mx - mn);
       const kind = Math.random() < CONFIG.BIRD_CHANCE ? 'bird' : 'ground';
-      this.obstacles.push(new Obstacle(this, { kind }));
+      const ob = new Obstacle(this, { kind });
+      // 컬러볼과 라벨이 겹치지 않도록 최소 간격 확보(겹치면 오른쪽으로 밀어 더 늦게 진입)
+      const gap = this._sepGap();
+      for (let tries = 0; tries < 6; tries++) {
+        let conflict = false;
+        const oc = ob.x + ob.w / 2;
+        for (const c of this.coins) {
+          if (Math.abs(oc - c.x) < gap) { ob.x = c.x + gap - ob.w / 2; conflict = true; break; }
+        }
+        if (!conflict) break;
+      }
+      this.obstacles.push(ob);
     }
 
     // 코인 스폰 (장애물과 독립 타이머 + 랜덤 위치, 장애물과 최소 간격 보장)
@@ -358,10 +369,13 @@ class Game {
            a.y < b.y + b.h && a.y + a.h > b.y;
   }
 
+  // 라벨이 겹치지 않도록 하는 최소 수평 간격(px) — 작은 화면에서도 하한 보장
+  _sepGap() { return Math.max(140, CONFIG.COIN_MIN_GAP * this.scale); }
+
   // 코인을 화면 오른쪽 밖 랜덤 x에 생성하되, 장애물/코인과 최소 간격을 확보
   _spawnCoin() {
     const s = this.scale;
-    const minGap = CONFIG.COIN_MIN_GAP * s;
+    const minGap = this._sepGap();
     let x = this.width + (40 + Math.random() * 240) * s;
     for (let tries = 0; tries < 10; tries++) {
       let conflict = false;
@@ -372,7 +386,7 @@ class Game {
       }
       if (!conflict) {
         for (const c of this.coins) {
-          if (Math.abs(x - c.x) < 80 * s) { x = c.x + 100 * s; conflict = true; break; }
+          if (Math.abs(x - c.x) < minGap) { x = c.x + minGap; conflict = true; break; }
         }
       }
       if (!conflict) break;
