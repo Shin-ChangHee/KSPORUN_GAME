@@ -22,7 +22,8 @@ const Share = {
     const cleared = game.state === STATE.CLEAR;
     ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
     ctx.fillStyle = C.ORANGE;
-    ctx.fillText(cleared ? '🏆 완주 성공!' : `STAGE ${game.stage.id} 도달`, 300, 120);
+    const stageId = (game.stage && game.stage.id) || 1;
+    ctx.fillText(cleared ? '🏆 완주 성공!' : `STAGE ${stageId} 도달`, 300, 120);
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 64px "Noto Sans KR", sans-serif';
     ctx.fillText(String(Math.floor(game.score)), 300, 210);
@@ -66,20 +67,22 @@ const Share = {
   async shareResult(game) {
     const url = new URL(location.href);
     url.searchParams.set('score', Math.floor(game.score));
+    const urlStr = url.toString();
     const text = `달려라 백호돌이에서 ${Math.floor(game.score)}점! 내 점수 깨봐 🐯`;
 
-    let blob = null, file = null;
+    let blob = null, file = null, dataURL = null;
     try {
       const canvas = this.buildResultImage(game);
-      // 동기적으로 Blob 생성 → 사용자 제스처(클릭) 활성화 유지
-      blob = this._dataURLtoBlob(canvas.toDataURL('image/png'));
+      // 동기적으로 dataURL/Blob 생성 → 사용자 제스처(클릭) 활성화 유지
+      dataURL = canvas.toDataURL('image/png');
+      blob = this._dataURLtoBlob(dataURL);
       file = new File([blob], 'baekhodori_score.png', { type: 'image/png' });
     } catch (e) { /* 이미지 생성 실패해도 링크 공유는 가능하게 진행 */ }
 
     // ① Web Share API — 파일 공유(모바일 우선)
     if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], text, url: url.toString() });
+        await navigator.share({ files: [file], text, url: urlStr });
         return;
       } catch (e) {
         if (e && e.name === 'AbortError') return; // 사용자가 공유 취소
@@ -88,25 +91,105 @@ const Share = {
     // ② 파일 공유 미지원 환경 — 텍스트/링크만 공유
     if (navigator.share) {
       try {
-        await navigator.share({ title: '달려라 백호돌이', text, url: url.toString() });
+        await navigator.share({ title: '달려라 백호돌이', text, url: urlStr });
         return;
       } catch (e) {
         if (e && e.name === 'AbortError') return;
       }
     }
-    // ③ 폴백(PC 등): 이미지 다운로드 + 링크 클립보드 복사
-    if (blob) this._download(blob, 'baekhodori_score.png');
-    let copied = false;
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(url.toString());
-        copied = true;
+    // ③ 폴백: 결과 이미지 + 링크를 띄운 오버레이(모바일에서도 실제 저장/복사 가능)
+    this._showFallbackModal(dataURL, blob, urlStr);
+  },
+
+  // Web Share 미지원(PC·인앱 브라우저) 폴백 — 이미지를 직접 보여줘 저장/복사를 보장
+  _showFallbackModal(dataURL, blob, urlStr) {
+    // 기존 모달 제거
+    const prev = document.getElementById('share-modal');
+    if (prev) prev.remove();
+
+    const C = (typeof CONFIG !== 'undefined' && CONFIG.COLORS) || { BLUE: '#0A2A70', ORANGE: '#FF7F00', WHITE: '#fff' };
+    const ov = document.createElement('div');
+    ov.id = 'share-modal';
+    ov.setAttribute('style', [
+      'position:fixed', 'inset:0', 'z-index:9999',
+      'background:rgba(0,0,0,0.62)', 'display:flex',
+      'align-items:center', 'justify-content:center', 'padding:18px',
+      'box-sizing:border-box', 'backdrop-filter:blur(2px)',
+    ].join(';'));
+
+    const card = document.createElement('div');
+    card.setAttribute('style', [
+      'background:#fff', 'border-radius:16px', 'max-width:380px', 'width:100%',
+      'max-height:90vh', 'overflow:auto', 'padding:18px',
+      'box-shadow:0 12px 40px rgba(0,0,0,0.35)', 'text-align:center',
+      'font-family:"Noto Sans KR",sans-serif',
+    ].join(';'));
+
+    const h = document.createElement('div');
+    h.textContent = '결과 공유';
+    h.setAttribute('style', `font-weight:800;font-size:18px;color:${C.BLUE};margin-bottom:10px`);
+    card.appendChild(h);
+
+    if (dataURL) {
+      const img = document.createElement('img');
+      img.src = dataURL;
+      img.setAttribute('style', 'width:100%;border-radius:10px;display:block;margin:0 auto 8px');
+      card.appendChild(img);
+      const hint = document.createElement('div');
+      hint.textContent = '📱 이미지를 길게 눌러 저장하거나, 아래 버튼을 이용하세요';
+      hint.setAttribute('style', 'font-size:12.5px;color:#666;margin-bottom:12px;line-height:1.45');
+      card.appendChild(hint);
+    }
+
+    const btnStyle = (bg, fg) => [
+      'display:block', 'width:100%', 'box-sizing:border-box', 'border:none',
+      'border-radius:10px', 'padding:13px', 'font-size:15px', 'font-weight:700',
+      'cursor:pointer', 'margin-bottom:8px', `background:${bg}`, `color:${fg}`,
+      'font-family:inherit',
+    ].join(';');
+
+    // 이미지 저장(다운로드) — PC에서 동작, 모바일은 길게 눌러 저장 안내
+    if (blob) {
+      const save = document.createElement('button');
+      save.textContent = '💾 이미지 저장';
+      save.setAttribute('style', btnStyle(C.ORANGE, '#fff'));
+      save.addEventListener('click', () => this._download(blob, 'baekhodori_score.png'));
+      card.appendChild(save);
+    }
+
+    // 링크 복사
+    const copy = document.createElement('button');
+    copy.textContent = '🔗 공유 링크 복사';
+    copy.setAttribute('style', btnStyle(C.BLUE, '#fff'));
+    copy.addEventListener('click', async () => {
+      let ok = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(urlStr); ok = true;
+        }
+      } catch (e) { /* 폴백 아래 */ }
+      if (!ok) {
+        // execCommand 폴백
+        const ta = document.createElement('textarea');
+        ta.value = urlStr; ta.setAttribute('style', 'position:fixed;opacity:0');
+        document.body.appendChild(ta); ta.select();
+        try { ok = document.execCommand('copy'); } catch (e) {}
+        ta.remove();
       }
-    } catch (e) { /* 무시 */ }
-    const msg = blob ? '결과 이미지를 저장했어요!\n' : '';
-    alert(msg + (copied
-      ? '공유 링크가 클립보드에 복사되었습니다.'
-      : '공유 링크: ' + url.toString()));
+      copy.textContent = ok ? '✅ 링크 복사됨!' : '🔗 ' + urlStr;
+    });
+    card.appendChild(copy);
+
+    // 닫기
+    const close = document.createElement('button');
+    close.textContent = '닫기';
+    close.setAttribute('style', btnStyle('#eee', '#333') + ';margin-bottom:0');
+    close.addEventListener('click', () => ov.remove());
+    card.appendChild(close);
+
+    ov.addEventListener('click', (e) => { if (e.target === ov) ov.remove(); });
+    ov.appendChild(card);
+    document.body.appendChild(ov);
   },
 
   // URL에 ?score= 가 있으면 "도전 대상 점수"로 반환
