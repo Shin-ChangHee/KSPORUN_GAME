@@ -62,21 +62,69 @@ class StageRenderer {
   }
 
   _drawPark(ctx, stage) {
-    const gy = this.game.groundY;
+    const g = this.game, gy = g.groundY, W = g.width, s = g.scale || 1;
+    // 구름 (원경, 가장 느리게)
+    this._clouds(ctx, this.scrollFar * 0.5, s);
     // 세계평화의문 실루엣 (원경)
-    const W = this.game.width;
-    const off = this.scrollFar % (W + 200);
+    const off = this.scrollFar % (W + 220 * s);
     ctx.fillStyle = 'rgba(255,255,255,0.55)';
     const px = W - off;
     ctx.beginPath();
     ctx.moveTo(px, gy);
-    ctx.lineTo(px + 30, gy - 130);
-    ctx.lineTo(px + 110, gy - 150);
-    ctx.lineTo(px + 140, gy);
+    ctx.lineTo(px + 30 * s, gy - 130 * s);
+    ctx.lineTo(px + 110 * s, gy - 150 * s);
+    ctx.lineTo(px + 140 * s, gy);
     ctx.closePath();
     ctx.fill();
-    // 잔디 언덕 (중경)
-    this._hills(ctx, gy - 10, 24, 'rgba(94,145,80,0.5)', this.scrollMid, 320);
+    // 나홀로 나무 (중경) — 띄엄띄엄 반복
+    const period = W * 0.85 + 280 * s;
+    const toff = (this.scrollMid * 0.7) % period;
+    for (let x = -toff; x < W + period; x += period) {
+      this._loneTree(ctx, x + W * 0.55, gy, s);
+    }
+    // 잔디 언덕 (중경, 가장 앞)
+    this._hills(ctx, gy - 10 * s, 24 * s, 'rgba(94,145,80,0.5)', this.scrollMid, 320 * s);
+  }
+
+  _cloud(ctx, x, y, s) {
+    ctx.beginPath();
+    ctx.arc(x, y, 18 * s, 0, Math.PI * 2);
+    ctx.arc(x + 22 * s, y - 9 * s, 24 * s, 0, Math.PI * 2);
+    ctx.arc(x + 48 * s, y, 18 * s, 0, Math.PI * 2);
+    ctx.arc(x + 24 * s, y + 8 * s, 20 * s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  _clouds(ctx, scroll, s) {
+    const W = this.game.width, gy = this.game.groundY;
+    const period = W + 320 * s;
+    const off = scroll % period;
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    for (const [fx, fy] of [[0.16, 0.16], [0.56, 0.1], [0.86, 0.24]]) {
+      let x = fx * W - off;
+      if (x < -160 * s) x += period;
+      this._cloud(ctx, x, fy * gy, s);
+    }
+  }
+
+  // 올림픽공원 나홀로 나무
+  _loneTree(ctx, x, gy, s) {
+    const trunkH = 72 * s, trunkW = 15 * s, cR = 46 * s, cy = gy - trunkH - cR * 0.5;
+    // 둔덕
+    ctx.fillStyle = 'rgba(94,145,80,0.45)';
+    ctx.beginPath(); ctx.ellipse(x, gy, 74 * s, 18 * s, 0, 0, Math.PI * 2); ctx.fill();
+    // 줄기
+    ctx.fillStyle = 'rgba(120,86,58,0.9)';
+    ctx.fillRect(x - trunkW / 2, gy - trunkH, trunkW, trunkH);
+    // 수관 (둥근 덩어리)
+    ctx.fillStyle = 'rgba(86,150,86,0.92)';
+    ctx.beginPath(); ctx.arc(x, cy, cR, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x - cR * 0.62, cy + cR * 0.35, cR * 0.7, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + cR * 0.62, cy + cR * 0.35, cR * 0.7, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x, cy - cR * 0.5, cR * 0.66, 0, Math.PI * 2); ctx.fill();
+    // 그늘
+    ctx.fillStyle = 'rgba(60,110,60,0.22)';
+    ctx.beginPath(); ctx.arc(x + cR * 0.35, cy + cR * 0.2, cR * 0.55, 0, Math.PI * 2); ctx.fill();
   }
 
   _drawVelodrome(ctx, stage) {
