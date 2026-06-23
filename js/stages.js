@@ -131,6 +131,17 @@ class StageRenderer {
     const g = this.game, gy = g.groundY, W = g.width, s = g.scale || 1;
     // 구름 (밝은 분위기)
     this._clouds(ctx, this.scrollFar * 0.5, s);
+    // 스피돔 경기장 일러스트 (원경) — 띄엄띄엄 반복
+    const img = this.game.assets['velodrome'];
+    if (img && img.complete && img.naturalWidth) {
+      const bw = Math.min(W * 0.58, 520 * s);
+      const bh = bw * img.naturalHeight / img.naturalWidth;
+      const period = W * 1.25 + 360 * s;
+      const off = this.scrollFar % period;
+      for (let x = -off; x < W + period; x += period) {
+        ctx.drawImage(img, x + W * 0.2, gy - bh, bw, bh);
+      }
+    }
     // 기울어진 뱅크 라인 (중경, 밝게)
     ctx.strokeStyle = 'rgba(255,255,255,0.6)';
     ctx.lineWidth = 3 * s;
