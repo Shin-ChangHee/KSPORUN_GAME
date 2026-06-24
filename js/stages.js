@@ -197,20 +197,7 @@ class StageRenderer {
       const slot = Math.round((x + this.scrollFar) / tperiod);
       this._floodlight(ctx, x + W * 0.18, gy, s, gy * 0.42 * hf[((slot % 4) + 4) % 4]);
     }
-    // 물결 (중경)
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-    ctx.lineWidth = 2 * s;
-    for (let row = 0; row < 4; row++) {
-      const yy = gy - 14 * s - row * 22 * s;
-      const off = (this.scrollMid * (1 + row * 0.2)) % (80 * s);
-      ctx.beginPath();
-      for (let x = -off; x < W; x += 80 * s) {
-        ctx.moveTo(x, yy);
-        ctx.quadraticCurveTo(x + 20 * s, yy - 6 * s, x + 40 * s, yy);
-        ctx.quadraticCurveTo(x + 60 * s, yy + 6 * s, x + 80 * s, yy);
-      }
-      ctx.stroke();
-    }
+    // (수면 위 물결은 지면 영역의 _waterSurface가 담당 — 하늘에 뜬 중경 물결은 제거)
     // 결승선/턴마크 깃발 부표 (중경) — 빨강·오렌지 번갈아
     const bperiod = W * 0.62 + 120 * s;
     const boff = this.scrollMid % bperiod;
