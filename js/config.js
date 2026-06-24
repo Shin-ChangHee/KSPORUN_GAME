@@ -50,7 +50,7 @@ const CONFIG = {
       id: 1,
       name: '올림픽공원',
       subtitle: '달리기',
-      intro: '세계평화의문을 지나 힘차게 달려요',
+      intro: '나홀로나무를 지나 힘차게 달려요',
       speed: 420,           // px/s 시작 스크롤 속도
       speedGrowth: 14,      // 초당 속도 증가
       maxSpeed: 720,        // 이 무대 최고 속도 상한
@@ -65,7 +65,7 @@ const CONFIG = {
       id: 2,
       name: '스피돔(경륜)',
       subtitle: '자전거',
-      intro: '뱅크를 질주하는 스피드의 무대',
+      intro: '트랙을 질주하는 스피드의 무대',
       speed: 560,
       speedGrowth: 18,
       maxSpeed: 920,

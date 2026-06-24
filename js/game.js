@@ -555,7 +555,7 @@ class Game {
     ctx.fillText(`STAGE ${this.stage.id} · ${this.stage.name}`, this.width / 2, this.height / 2 - 6 * u);
     ctx.font = `${Math.round(18 * u)}px "Noto Sans KR", sans-serif`;
     ctx.fillStyle = CONFIG.COLORS.SKYBLUE;
-    ctx.fillText(`[${this.stage.subtitle}] ${this.stage.intro}`, this.width / 2, this.height / 2 + 30 * u);
+    ctx.fillText(this.stage.intro, this.width / 2, this.height / 2 + 30 * u);
     ctx.restore();
   }
 
