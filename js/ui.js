@@ -7,6 +7,7 @@ const UI = {
     this.game = game;
     this.el = {
       title: document.getElementById('screen-title'),
+      howto: document.getElementById('screen-howto'),
       over: document.getElementById('screen-over'),
       clear: document.getElementById('screen-clear'),
     };
@@ -28,6 +29,7 @@ const UI = {
     if (!this.el) return;
     const s = game.state;
     this._toggle(this.el.title, s === STATE.TITLE);
+    this._toggle(this.el.howto, s === STATE.HOWTO);
     this._toggle(this.el.over, s === STATE.GAMEOVER);
     this._toggle(this.el.clear, s === STATE.CLEAR);
 

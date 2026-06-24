@@ -5,6 +5,7 @@
 const STATE = {
   LOADING: 'LOADING',
   TITLE: 'TITLE',
+  HOWTO: 'HOWTO',
   STAGE_CARD: 'STAGE_CARD',
   PLAY: 'PLAY',
   GAMEOVER: 'GAMEOVER',
@@ -178,6 +179,13 @@ class Game {
         if (this.elapsed - this._endTime > 0.6) this._startGame();
         break;
     }
+  }
+
+  // 시작 전 '게임 방법' 안내 화면 표시
+  _showHowto() {
+    this.audio.unlock();
+    this.state = STATE.HOWTO;
+    this._syncOverlay();
   }
 
   _startGame() {

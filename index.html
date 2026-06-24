@@ -27,7 +27,24 @@
         <p class="hint">장애물 <b>안일·무기력·비효율·은폐</b>는 극복 대상 · <b>존중·조화·정정당당</b> 컬러볼은 수집!</p>
         <p id="challenge-note" class="challenge"></p>
         <p id="title-best" class="best"></p>
-        <button class="cta" onclick="GAME._startGame()">▶ 시작하기</button>
+        <button class="cta" onclick="GAME._showHowto()">▶ 시작하기</button>
+        <p class="ctrl">PC: Space / ↑ 점프 &nbsp;·&nbsp; 모바일: 화면 탭</p>
+      </div>
+    </div>
+
+    <!-- 게임 방법 화면 -->
+    <div id="screen-howto" class="overlay" style="display:none">
+      <div class="panel">
+        <h2>게임 방법</h2>
+        <div class="howto-row">
+          <img class="howto-img" src="assets/images/obstacle_monster.png?v=__BUILD__" alt="장애물" />
+          <p class="howto-text"><b>장애물</b>을 피하고<br/><b class="sky">핵심가치</b>로 극복하세요!</p>
+        </div>
+        <div class="howto-row">
+          <img class="howto-img" src="assets/images/coin_char1.png?v=__BUILD__" alt="컬러볼" />
+          <p class="howto-text"><b>존중·조화·정정당당</b><br/><b class="orange">컬러볼</b>을 수집하세요!</p>
+        </div>
+        <button class="cta" onclick="GAME._startGame()">▶ 시작!</button>
         <p class="ctrl">PC: Space / ↑ 점프 &nbsp;·&nbsp; 모바일: 화면 탭</p>
       </div>
     </div>

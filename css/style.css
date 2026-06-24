@@ -127,6 +127,21 @@ h2 { font-size: 26px; font-weight: 900; color: var(--blue); margin: 4px 0 10px; 
 
 .ctrl { font-size: 12px; color: #888; margin-top: 12px; }
 
+/* 게임 방법 안내 */
+.howto-row {
+  display: flex; align-items: center; gap: 14px; text-align: left;
+  background: #f0f6fb; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px;
+}
+.howto-img {
+  width: 76px; height: 76px; object-fit: contain; flex: 0 0 auto;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+}
+.howto-text { font-size: 15px; line-height: 1.55; color: #333; margin: 0; }
+@media (max-width: 480px) {
+  .howto-img { width: 60px; height: 60px; }
+  .howto-text { font-size: 13.5px; }
+}
+
 .btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
 .endless-title { font-size: 14px; font-weight: 700; color: var(--blue); margin: 10px 0 6px; }
 .endless-row { gap: 8px; }
